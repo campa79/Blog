@@ -1,66 +1,60 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
+import { useEffect, useState } from "react";
+import { db } from "@/lib/firebase";
+import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
+import PostForm from "@/components/PostForm";
+import PostItem from "@/components/PostItem";
+import { useAuth } from "@/context/AuthContext";
+import { Loader2 } from "lucide-react";
 
 export default function Home() {
+  const { user, loading: authLoading } = useAuth();
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const postsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setPosts(postsData);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.js file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div style={{ paddingTop: '1rem', maxWidth: '680px', margin: '0 auto' }}>
+      {authLoading ? (
+        <div style={{ textAlign: 'center', padding: '1rem' }} className="text-secondary">Cargando usuario...</div>
+      ) : user ? (
+        <PostForm />
+      ) : (
+        <div className="card" style={{ textAlign: 'center', backgroundColor: 'var(--surface)' }}>
+          Inicia sesión para poder publicar en el blog.
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      )}
+
+      {loading ? (
+        <div style={{ display: 'grid', placeItems: 'center', height: '200px' }}>
+          <Loader2 className="animate-spin text-primary" size={40} />
         </div>
-      </main>
+      ) : (
+        <div className="posts-feed">
+          {posts.length === 0 ? (
+            <div className="card text-secondary" style={{ textAlign: 'center' }}>
+              No hay posts aún. ¡Sé el primero en publicar!
+            </div>
+          ) : (
+            posts.map(post => (
+              <PostItem key={post.id} post={post} />
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 }
