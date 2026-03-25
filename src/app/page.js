@@ -1,4 +1,5 @@
 "use client";
+// Force redeploy with pro features: 2026-03-24T22:27:00
 import { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
