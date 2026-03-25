@@ -92,6 +92,10 @@ export default function PostItem({ post }) {
 
       <p style={{ whiteSpace: 'pre-wrap', marginBottom: '1rem' }}>{post.content}</p>
 
+      {post.imageUrl && (
+        <img src={post.imageUrl} alt="Post content" className="post-image" loading="lazy" />
+      )}
+
       <div style={{ 
         marginTop: '1.5rem', 
         paddingTop: '1rem', 
