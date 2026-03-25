@@ -38,11 +38,11 @@ export default function Home() {
         </div>
       )}
 
-      {loading ? (
+      {loading || authLoading ? (
         <div style={{ display: 'grid', placeItems: 'center', height: '200px' }}>
           <Loader2 className="animate-spin text-primary" size={40} />
         </div>
-      ) : (
+      ) : user ? (
         <div className="posts-feed">
           {posts.length === 0 ? (
             <div className="card text-secondary" style={{ textAlign: 'center' }}>
@@ -53,6 +53,13 @@ export default function Home() {
               <PostItem key={post.id} post={post} />
             ))
           )}
+        </div>
+      ) : (
+        <div className="card" style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+          <h2 style={{ marginBottom: '1rem' }}>Bienvenido a desarrollodesoftware.ar</h2>
+          <p className="text-secondary" style={{ marginBottom: '2rem' }}>
+            Nuestro contenido es exclusivo para la comunidad. Por favor, inicia sesión con tu cuenta de Google para ver los posts y participar.
+          </p>
         </div>
       )}
     </div>
