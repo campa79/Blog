@@ -24,12 +24,13 @@ export default function Navbar() {
         <Link href="/" style={{ 
           display: 'flex', 
           alignItems: 'center', 
-          gap: '4px', 
+          gap: '2px', 
           textDecoration: 'none',
-          fontSize: '1.5rem',
+          fontSize: '1.8rem',
           fontWeight: '700',
-          letterSpacing: '-0.5px',
-          fontFamily: 'var(--font-sans)'
+          letterSpacing: '-1px',
+          fontFamily: 'var(--font-sans)',
+          lineHeight: '1'
         }}>
           <span style={{ color: '#1A73E8' }}>{'{'}</span>
           <span style={{ color: '#1A73E8' }}>desarrollo</span>

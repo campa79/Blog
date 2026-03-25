@@ -4,7 +4,8 @@ import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { doc, updateDoc, deleteDoc, increment } from "firebase/firestore";
 import Image from "next/image";
-import { MoreVertical, Trash2, Edit2, Clock } from "lucide-react";
+import { MoreVertical, Trash2, Edit2, Clock, BookOpen } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import PostForm from "./PostForm";
 
 export default function PostItem({ post }) {
@@ -13,9 +14,14 @@ export default function PostItem({ post }) {
   const [showMenu, setShowMenu] = useState(false);
   
   const isAuthor = user && post.authorEmail && user.email.toLowerCase() === post.authorEmail.toLowerCase();
+  
   const dateStr = post.createdAt?.toDate().toLocaleDateString('es-AR', {
     day: 'numeric', month: 'long', year: 'numeric'
   });
+
+  // Calculate read time (approx 200 words per minute)
+  const wordCount = post.content.split(/\s+/).length;
+  const readTime = Math.max(1, Math.ceil(wordCount / 200));
 
   const handleReaction = async (emoji) => {
     if (!user) return alert("Debes iniciar sesión para reaccionar.");
@@ -51,13 +57,19 @@ export default function PostItem({ post }) {
             <Image src={post.authorPhoto} alt={post.authorName} width={40} height={40} style={{ borderRadius: '50%' }} />
           ) : (
             <div style={{ width: 40, height: 40, borderRadius: '50%', backgroundColor: 'var(--surface)', display: 'grid', placeItems: 'center' }}>
-              {post.authorName[0]}
+              {post.authorName ? post.authorName[0] : "?"}
             </div>
           )}
           <div>
-            <div style={{ fontWeight: 500 }}>{post.authorName}</div>
-            <div className="text-secondary" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem' }}>
-              <Clock size={12} /> {dateStr} • {post.authorEmail}
+            <div style={{ fontWeight: 500, fontSize: '0.95rem' }}>{post.authorName}</div>
+            <div className="text-secondary" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.75rem' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Clock size={12} /> {dateStr}
+              </span>
+              <span>•</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <BookOpen size={12} /> {readTime} min de lectura
+              </span>
             </div>
           </div>
         </div>
@@ -90,7 +102,9 @@ export default function PostItem({ post }) {
         )}
       </div>
 
-      <p style={{ whiteSpace: 'pre-wrap', marginBottom: '1rem' }}>{post.content}</p>
+      <div className="markdown-content" style={{ marginBottom: '1rem', fontSize: '1rem', lineHeight: '1.6' }}>
+        <ReactMarkdown>{post.content}</ReactMarkdown>
+      </div>
 
       {post.imageUrl && (
         <img src={post.imageUrl} alt="Post content" className="post-image" loading="lazy" />
