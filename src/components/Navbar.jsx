@@ -21,21 +21,8 @@ export default function Navbar() {
         justifyContent: 'space-between',
         alignItems: 'center'
       }}>
-        <Link href="/" style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '4px', 
-          textDecoration: 'none',
-          fontSize: '1.5rem',
-          fontWeight: '700',
-          letterSpacing: '-0.5px',
-          fontFamily: 'var(--font-sans)'
-        }}>
-          <span style={{ color: '#1A73E8' }}>{'{'}</span>
-          <span style={{ color: '#1A73E8' }}>desarrollo</span>
-          <span style={{ color: '#202124' }}>desoftware</span>
-          <span style={{ color: '#1A73E8' }}>.ar</span>
-          <span style={{ color: '#1A73E8' }}>{'}'}</span>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
+          <Image src="/logo.png" alt="desarrollodesoftware.ar" width={220} height={40} style={{ objectFit: 'contain', width: 'auto', height: '42px' }} />
         </Link>
 
         <div>

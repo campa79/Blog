@@ -6,6 +6,7 @@ import PostForm from "@/components/PostForm";
 import PostItem from "@/components/PostItem";
 import { useAuth } from "@/context/AuthContext";
 import { Loader2 } from "lucide-react";
+import Image from "next/image";
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
@@ -56,8 +57,17 @@ export default function Home() {
         </div>
       ) : (
         <div className="card" style={{ textAlign: 'center', padding: '3rem 1rem' }}>
-          <h2 style={{ marginBottom: '1rem' }}>Bienvenido a desarrollodesoftware.ar</h2>
-          <p className="text-secondary" style={{ marginBottom: '2rem' }}>
+          <div style={{ marginBottom: '2rem' }}>
+            <Image 
+              src="/logo.png" 
+              alt="desarrollodesoftware.ar" 
+              width={300} 
+              height={60} 
+              style={{ objectFit: 'contain', height: 'auto', margin: '0 auto' }} 
+            />
+          </div>
+          <h1 style={{ marginBottom: '1rem', fontSize: '1.75rem' }}>Bienvenido a desarrollodesoftware.ar</h1>
+          <p className="text-secondary" style={{ marginBottom: '2rem', fontSize: '1.1rem' }}>
             Nuestro contenido es exclusivo para la comunidad. Por favor, inicia sesión con tu cuenta de Google para ver los posts y participar.
           </p>
         </div>
