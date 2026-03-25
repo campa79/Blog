@@ -111,10 +111,10 @@ input:focus, textarea:focus {
 
 .post-image {
   width: 100%;
+  height: auto;
   border-radius: 8px;
   margin-top: 1rem;
-  object-fit: cover;
-  max-height: 400px;
+  display: block;
 }
 
 /* Animations */
