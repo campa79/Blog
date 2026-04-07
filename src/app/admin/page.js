@@ -3,9 +3,8 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { db, storage } from "@/lib/firebase";
-import { collection, addDoc, getDocs, updateDoc, doc, deleteDoc } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db } from "@/lib/firebase";
+import { collection, addDoc, getDocs, doc, deleteDoc } from "firebase/firestore";
 
 export default function AdminPage() {
   const { user } = useAuth();
@@ -93,17 +92,20 @@ export default function AdminPage() {
     setLoading(true);
 
     try {
-      // 1. Subir imagen
-      const storageRef = ref(storage, `products/${Date.now()}_${image.name}`);
-      await uploadBytes(storageRef, image);
-      const downloadURL = await getDownloadURL(storageRef);
+      // 1. Subir imagen via API route (server-side → Vercel Blob, sin CORS)
+      const uploadRes = await fetch(`/api/upload?filename=${encodeURIComponent(image.name)}`, {
+        method: 'POST',
+        body: image,
+      });
+      if (!uploadRes.ok) throw new Error('Error subiendo imagen');
+      const { url: imageUrl } = await uploadRes.json();
 
-      // 2. Guardar producto en db
+      // 2. Guardar producto en Firestore
       await addDoc(collection(db, "products"), {
         name,
         price: Number(price),
         stock: Number(stock),
-        imageUrl: downloadURL,
+        imageUrl,
         createdAt: new Date().toISOString()
       });
 
@@ -115,7 +117,7 @@ export default function AdminPage() {
       fetchProducts();
     } catch (error) {
       console.error("Error al publicar:", error);
-      alert("Hubo un error cargando el producto");
+      alert("Hubo un error cargando el producto: " + error.message);
     } finally {
       setLoading(false);
     }
