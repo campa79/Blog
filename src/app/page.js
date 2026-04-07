@@ -1,133 +1,207 @@
 "use client";
-// Force redeploy with pro features: 2026-03-24T22:27:00
-import { useEffect, useState } from "react";
-import { db } from "@/lib/firebase";
-import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
-import PostForm from "@/components/PostForm";
-import PostItem from "@/components/PostItem";
-import { useAuth } from "@/context/AuthContext";
-import { Search as SearchIcon, Filter, Loader2 } from "lucide-react";
-import Image from "next/image";
 
-export default function Home() {
-  const { user, loading: authLoading } = useAuth();
-  const [posts, setPosts] = useState([]);
+import { useState, useEffect } from "react";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, updateDoc, doc } from "firebase/firestore";
+import { useAuth } from "@/context/AuthContext";
+
+export default function StorePage() {
+  const [products, setProducts] = useState([]);
+  const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filter, setFilter] = useState("all"); // 'all' or 'mine'
+  const { user, login } = useAuth();
+  
+  const [checkoutStatus, setCheckoutStatus] = useState("");
 
   useEffect(() => {
-    const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const postsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setPosts(postsData);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
+    fetchProducts();
   }, []);
 
-  const filteredPosts = posts.filter(post => {
-    const matchesSearch = post.content.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         post.authorName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filter === "all" || post.authorEmail === user?.email;
-    return matchesSearch && matchesFilter;
-  });
+  const fetchProducts = async () => {
+    try {
+      const q = collection(db, "products");
+      const snapshot = await getDocs(q);
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setProducts(docs);
+    } catch (error) {
+      console.error("Error al cargar productos", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addToCart = (product, quantity) => {
+    if (quantity <= 0) return;
+    if (quantity > product.stock) {
+      alert("No hay suficiente stock para esa cantidad");
+      return;
+    }
+    
+    setCart((prevCart) => {
+      const existing = prevCart.find(item => item.id === product.id);
+      if (existing) {
+        // Actualizar la cantidad asegurando no pasar del stock original
+        const nuevacantidad = existing.quantity + quantity;
+        if (nuevacantidad > product.stock) {
+            alert(`Solo puedes llevar hasta ${product.stock} unidades de este producto.`);
+            return prevCart;
+        }
+        return prevCart.map(item =>
+          item.id === product.id ? { ...item, quantity: nuevacantidad } : item
+        );
+      }
+      return [...prevCart, { ...product, quantity }];
+    });
+  };
+
+  const removeFromCart = (id) => {
+    setCart(prev => prev.filter(item => item.id !== id));
+  };
+
+  const cartTotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+
+  const handleCheckout = async () => {
+    if (!user) {
+      alert("Inicia sesión para comprar.");
+      login();
+      return;
+    }
+
+    setCheckoutStatus("Procesando tu compra...");
+    try {
+      // Registrar la orden al endpoint 
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cart,
+          buyerEmail: user.email,
+          total: cartTotal
+        })
+      });
+
+      if (!response.ok) {
+         throw new Error("Error procesando pago");
+      }
+
+      // Actualizar el stock en Firebase (opcional pero deseado)
+      for (let item of cart) {
+          const productRef = doc(db, "products", item.id);
+          const newStock = item.stock - item.quantity;
+          await updateDoc(productRef, { stock: newStock });
+      }
+
+      setCheckoutStatus("¡Compra exitosa! Nos comunicaremos al administrador con tus datos.");
+      setCart([]);
+      fetchProducts(); // refresh stock
+    } catch (error) {
+      console.error(error);
+      setCheckoutStatus("Hubo un error al procesar tu orden.");
+    }
+  };
 
   return (
-    <div style={{ paddingTop: '1rem', maxWidth: '680px', margin: '0 auto' }}>
-      {authLoading ? (
-        <div className="card" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <div className="skeleton" style={{ width: 40, height: 40, borderRadius: '50%' }} />
-          <div className="skeleton" style={{ flex: 1, height: 20 }} />
+    <div className="container" style={{ display: 'flex', gap: '2rem', padding: '2rem 1rem' }}>
+      {/* Catálogo de Productos */}
+      <div style={{ flex: 3 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+          <h1 style={{ fontSize: '2.5rem', fontWeight: '800', fontFamily: 'var(--font-sans)', color: 'var(--text-primary)'}}>Tech Store</h1>
         </div>
-      ) : user ? (
-        <PostForm />
-      ) : (
-        <div className="card" style={{ textAlign: 'center', backgroundColor: 'var(--surface)' }}>
-          Inicia sesión para poder publicar en el blog.
-        </div>
-      )}
 
-      {/* Search and Filters */}
-      {user && !authLoading && (
-        <div className="search-container">
-          <div style={{ position: 'relative', flex: 1 }}>
-            <SearchIcon size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--secondary)' }} />
-            <input 
-              type="text" 
-              className="search-input" 
-              placeholder="Buscar por contenido o autor..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ paddingLeft: '40px' }}
-            />
+        {loading ? (
+          <p>Cargando catálogo...</p>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '2rem' }}>
+            {products.map(product => (
+              <ProductCard key={product.id} product={product} onAdd={addToCart} />
+            ))}
+            {products.length === 0 && <p style={{ color: 'var(--text-secondary)'}}>Próximamente habrá productos en la tienda.</p>}
           </div>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button 
-              className={`filter-chip ${filter === 'all' ? 'active' : ''}`}
-              onClick={() => setFilter('all')}
-            >
-              Todos
-            </button>
-            <button 
-              className={`filter-chip ${filter === 'mine' ? 'active' : ''}`}
-              onClick={() => setFilter('mine')}
-            >
-              Mis Posts
-            </button>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {loading || authLoading ? (
-        <div className="posts-feed">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="card" style={{ marginBottom: '1rem' }}>
-              <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-                <div className="skeleton" style={{ width: 40, height: 40, borderRadius: '50%' }} />
-                <div style={{ flex: 1 }}>
-                  <div className="skeleton" style={{ height: 15, width: '40%', marginBottom: '8px' }} />
-                  <div className="skeleton" style={{ height: 10, width: '20%' }} />
-                </div>
-              </div>
-              <div className="skeleton" style={{ height: 100, width: '100%', marginBottom: '1rem' }} />
-              <div className="skeleton" style={{ height: 10, width: '60%' }} />
-            </div>
-          ))}
-        </div>
-      ) : user ? (
-        <div className="posts-feed">
-          {filteredPosts.length === 0 ? (
-            <div className="card text-secondary" style={{ textAlign: 'center', padding: '3rem 1rem' }}>
-              {searchTerm ? "No se encontraron posts que coincidan con tu búsqueda." : "No hay posts aún. ¡Sé el primero en publicar!"}
-            </div>
+      {/* Carrito Lateral */}
+      <div style={{ flex: 1, minWidth: '320px' }}>
+        <div style={{ background: 'white', borderRadius: '16px', padding: '1.5rem', position: 'sticky', top: '100px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', border: '1px solid var(--border)' }}>
+          <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+             🛒 Tu Carrito
+          </h2>
+          
+          {cart.length === 0 ? (
+            <p style={{ color: 'var(--text-secondary)', textAlign: 'center', margin: '2rem 0' }}>El carrito está vacío</p>
           ) : (
-            filteredPosts.map(post => (
-              <PostItem key={post.id} post={post} />
-            ))
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {cart.map(item => (
+                <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
+                  <div>
+                    <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '1rem' }}>{item.name}</h4>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{item.quantity} x ${item.price}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <span style={{ fontWeight: '600' }}>${item.price * item.quantity}</span>
+                    <button onClick={() => removeFromCart(item.id)} style={{ background: 'none', border: 'none', color: 'red', cursor: 'pointer', fontSize: '1.2rem' }}>
+                      ✖
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              <div style={{ marginTop: '1rem', borderTop: '2px dashed var(--border)', paddingTop: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.2rem', fontWeight: '700', marginBottom: '1.5rem' }}>
+                  <span>Total:</span>
+                  <span>${cartTotal}</span>
+                </div>
+                
+                <button 
+                  onClick={handleCheckout}
+                  style={{ width: '100%', padding: '1rem', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '12px', fontSize: '1.1rem', fontWeight: '600', cursor: 'pointer', transition: 'background 0.2s' }}
+                >
+                  Finalizar Compra
+                </button>
+                {checkoutStatus && <p style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.9rem', color: checkoutStatus.includes("error") ? 'red' : 'green' }}>{checkoutStatus}</p>}
+              </div>
+            </div>
           )}
         </div>
-      ) : (
-        <div className="card" style={{ textAlign: 'center', padding: '3rem 1rem' }}>
-          <div style={{ marginBottom: '2rem' }}>
-            <Image 
-              src="/logo.png" 
-              alt="desarrollodesoftware.ar" 
-              width={300} 
-              height={60} 
-              style={{ objectFit: 'contain', height: 'auto', margin: '0 auto' }} 
-            />
-          </div>
-          <h1 style={{ marginBottom: '1rem', fontSize: '1.75rem' }}>Bienvenido a desarrollodesoftware.ar</h1>
-          <p className="text-secondary" style={{ marginBottom: '2rem', fontSize: '1.1rem' }}>
-            Nuestro contenido es exclusivo para la comunidad. Por favor, inicia sesión con tu cuenta de Google para ver los posts y participar.
-          </p>
+      </div>
+    </div>
+  );
+}
+
+function ProductCard({ product, onAdd }) {
+  const [qty, setQty] = useState(1);
+  const isOutOfStock = product.stock <= 0;
+
+  return (
+    <div style={{ background: 'white', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', transition: 'transform 0.2s', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column' }}>
+      <img src={product.imageUrl} alt={product.name} style={{ width: '100%', height: '220px', objectFit: 'cover' }} />
+      <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+        <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.25rem', fontFamily: 'var(--font-sans)', fontWeight: '600' }}>{product.name}</h3>
+        <p style={{ margin: '0 0 1rem 0', fontSize: '1.5rem', fontWeight: '700', color: '#1A73E8' }}>${product.price}</p>
+        
+        <div style={{ flexGrow: 1 }}></div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '1rem' }}>
+          <span style={{ fontSize: '0.9rem', color: isOutOfStock ? 'red' : 'var(--text-secondary)', marginRight: 'auto' }}>
+            {isOutOfStock ? "Agotado" : `Stock: ${product.stock}`}
+          </span>
+          {!isOutOfStock && (
+             <div style={{ display: 'flex', alignItems: 'center', background: '#f3f4f6', borderRadius: '8px' }}>
+                <button onClick={() => setQty(Math.max(1, qty - 1))} style={{ width: '30px', height: '30px', border: 'none', background: 'transparent', cursor: 'pointer' }}>-</button>
+                <span style={{ width: '30px', textAlign: 'center', fontSize: '0.9rem' }}>{qty}</span>
+                <button onClick={() => setQty(Math.min(product.stock, qty + 1))} style={{ width: '30px', height: '30px', border: 'none', background: 'transparent', cursor: 'pointer' }}>+</button>
+             </div>
+          )}
         </div>
-      )}
+        
+        <button 
+          onClick={() => { onAdd(product, qty); setQty(1); }}
+          disabled={isOutOfStock}
+          style={{ marginTop: '1rem', width: '100%', padding: '0.75rem', backgroundColor: isOutOfStock ? '#d1d5db' : '#202124', color: 'white', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: isOutOfStock ? 'not-allowed' : 'pointer' }}
+        >
+          {isOutOfStock ? "Sin Stock" : "Agregar al Carrito"}
+        </button>
+      </div>
     </div>
   );
 }

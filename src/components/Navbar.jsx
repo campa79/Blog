@@ -39,6 +39,14 @@ export default function Navbar() {
           <span style={{ color: '#1A73E8' }}>{'}'}</span>
         </Link>
 
+        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', fontWeight: '500', marginLeft: '2rem', flexGrow: 1 }}>
+          <Link href="/" style={{ textDecoration: 'none', color: 'var(--text-primary)' }}>Tienda</Link>
+          <Link href="/blog" style={{ textDecoration: 'none', color: 'var(--text-primary)' }}>Blog</Link>
+          {user?.email === 'alberto.campagna@bue.edu.ar' && (
+            <Link href="/admin" style={{ textDecoration: 'none', color: '#1A73E8' }}>Admin</Link>
+          )}
+        </div>
+
         <div>
           {user ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
