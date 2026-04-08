@@ -38,7 +38,6 @@ export default function PostForm({ existingPost = null, onComplete = () => {} })
       let imageUrl = existingPost?.imageUrl || "";
 
       if (image) {
-        // Upload to Vercel Blob via API route
         const response = await fetch(`/api/upload?filename=${encodeURIComponent(image.name)}`, {
           method: 'POST',
           body: image,
@@ -75,37 +74,37 @@ export default function PostForm({ existingPost = null, onComplete = () => {} })
       onComplete();
     } catch (error) {
       console.error("Error saving post:", error);
-      alert("Error al guardar el post (Vercel Blob tokens?).");
+      alert("Error al guardar el post.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="card" style={{ marginBottom: "2rem" }}>
+    <div className="card-premium" style={{ marginBottom: "2rem", border: 'none', padding: '1.5rem' }}>
       <form onSubmit={handleSubmit}>
         <textarea
           placeholder="¿Qué estás pensando?"
           value={content}
           onChange={(e) => setContent(e.target.value)}
           rows={3}
-          style={{ border: 'none', resize: 'none', marginBottom: '1rem', padding: '0.5rem 0' }}
+          style={{ width: '100%', border: 'none', outline: 'none', resize: 'none', fontSize: '1.1rem', marginBottom: '1rem', fontFamily: 'inherit' }}
         />
 
         {preview && (
-          <div style={{ position: 'relative', marginBottom: '1rem' }}>
-            <img src={preview} alt="Preview" className="post-image" style={{ filter: loading ? 'grayscale(0.5)' : 'none' }} />
+          <div style={{ position: 'relative', marginBottom: '1rem', borderRadius: 'var(--rounded-md)', overflow: 'hidden' }}>
+            <img src={preview} alt="Preview" style={{ width: '100%', height: 'auto', display: 'block', filter: loading ? 'grayscale(0.5)' : 'none' }} />
             {!loading && (
               <button
                 type="button"
                 onClick={removeImage}
                 style={{
                   position: 'absolute', top: '10px', right: '10px',
-                  backgroundColor: 'rgba(0,0,0,0.5)', color: 'white',
-                  borderRadius: '50%', padding: '4px'
+                  backgroundColor: 'rgba(15, 23, 42, 0.6)', color: 'white',
+                  borderRadius: '50%', padding: '6px', backdropFilter: 'blur(4px)'
                 }}
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             )}
           </div>
@@ -118,7 +117,8 @@ export default function PostForm({ existingPost = null, onComplete = () => {} })
               className="btn-outline"
               onClick={() => fileInputRef.current.click()}
               disabled={loading}
-              style={{ padding: '0.5rem', borderRadius: '50%', width: '40px', height: '40px', display: 'grid', placeItems: 'center' }}
+              style={{ padding: '0.5rem', borderRadius: '50%', width: '42px', height: '42px', display: 'grid', placeItems: 'center' }}
+              title="Añadir imagen"
             >
               <ImageIcon size={20} />
             </button>
@@ -135,10 +135,9 @@ export default function PostForm({ existingPost = null, onComplete = () => {} })
             type="submit"
             className="btn-primary"
             disabled={loading || (!content.trim() && !image && !existingPost?.imageUrl)}
-            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
           >
             {loading ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
-            {existingPost ? "Actualizar" : "Publicar"}
+            <span>{existingPost ? "Actualizar" : "Publicar"}</span>
           </button>
         </div>
       </form>
