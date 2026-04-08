@@ -174,7 +174,9 @@ function ProductCard({ product, onAdd }) {
 
   return (
     <div style={{ background: 'white', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', transition: 'transform 0.2s', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column' }}>
-      <img src={product.imageUrl} alt={product.name} style={{ width: '100%', height: '220px', objectFit: 'cover' }} />
+      <div style={{ width: '100%', height: '220px', background: '#f8f9fa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <img src={product.imageUrl} alt={product.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+      </div>
       <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
         <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.25rem', fontFamily: 'var(--font-sans)', fontWeight: '600' }}>{product.name}</h3>
         <p style={{ margin: '0 0 1rem 0', fontSize: '1.5rem', fontWeight: '700', color: '#1A73E8' }}>${product.price}</p>

@@ -281,8 +281,9 @@ export default function AdminPage() {
                         style={{ padding: "0.5rem 0", display: "block" }} />
                     </div>
                     {imagePreview && (
-                      <img src={imagePreview} alt="preview"
-                        style={{ width: "100px", height: "100px", objectFit: "cover", borderRadius: "10px", border: "2px solid #e5e7eb" }} />
+                      <div style={{ width: "100px", height: "100px", background: "#f8f9fa", borderRadius: "10px", border: "2px solid #e5e7eb", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                        <img src={imagePreview} alt="preview" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                      </div>
                     )}
                   </div>
                 </div>
@@ -318,8 +319,9 @@ export default function AdminPage() {
                   boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
                   border: editingProduct?.id === product.id ? "2px solid #f59e0b" : "2px solid transparent"
                 }}>
-                  <img src={product.imageUrl} alt={product.name}
-                    style={{ width: "80px", height: "80px", objectFit: "cover", borderRadius: "10px", flexShrink: 0 }} />
+                  <div style={{ width: "80px", height: "80px", background: "#f8f9fa", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
+                    <img src={product.imageUrl} alt={product.name} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                  </div>
 
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <h3 style={{ margin: "0 0 0.25rem", fontSize: "1.1rem", fontWeight: "600", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{product.name}</h3>

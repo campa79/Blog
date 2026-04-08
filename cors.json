@@ -1,0 +1,16 @@
+[
+  {
+    "origin": [
+      "https://desarrollodesoftware.vercel.app",
+      "https://desarrollodesoftware.ar",
+      "http://localhost:3000"
+    ],
+    "method": ["GET", "POST", "PUT", "DELETE", "HEAD"],
+    "maxAgeSeconds": 3600,
+    "responseHeader": [
+      "Content-Type",
+      "Access-Control-Allow-Origin",
+      "Authorization"
+    ]
+  }
+]
