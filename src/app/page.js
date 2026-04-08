@@ -4,13 +4,14 @@ import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, updateDoc, doc } from "firebase/firestore";
 import { useAuth } from "@/context/AuthContext";
-import { ShoppingCart, ShoppingBag, X, Plus, Minus, CheckCircle, ArrowRight } from "lucide-react";
+import { ShoppingCart, ShoppingBag, X, Plus, Minus, CheckCircle, ArrowRight, ChevronLeft, ChevronRight, Maximize2 } from "lucide-react";
 
 export default function StorePage() {
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [zoomImage, setZoomImage] = useState(null); // URL de la imagen para el lightbox
   const { user, login } = useAuth();
   
   const [checkoutStatus, setCheckoutStatus] = useState("");
@@ -54,7 +55,6 @@ export default function StorePage() {
       return [...prevCart, { ...product, quantity }];
     });
     
-    // Auto open cart on mobile to show it worked
     if (window.innerWidth < 768) {
         setIsCartOpen(true);
     }
@@ -106,16 +106,15 @@ export default function StorePage() {
   return (
     <div className="container" style={{ paddingBottom: '5rem' }}>
       
-      {/* Hero / Header Section */}
+      {/* Header */}
       <section style={{ textAlign: 'center', marginBottom: '4rem', marginTop: '1rem' }}>
           <h1 className="animate-fade-in" style={{ marginBottom: '1rem' }}>La tienda para <span style={{ color: 'var(--primary)' }}>desarrolladores</span></h1>
           <p className="animate-fade-in" style={{ color: 'var(--text-muted)', fontSize: '1.2rem', maxWidth: '600px', margin: '0 auto' }}>
-            Equipamiento de alta calidad y accesorios seleccionados para potenciar tu productividad.
+            Equipamiento de alta calidad con soporte para múltiples vistas por producto.
           </p>
       </section>
 
       <div style={{ display: 'flex', gap: '2.5rem', position: 'relative' }}>
-        {/* Catálogo */}
         <div style={{ flex: 1 }}>
           {loading ? (
             <div className="responsive-grid">
@@ -126,19 +125,17 @@ export default function StorePage() {
           ) : (
             <div className="responsive-grid">
               {products.map(product => (
-                <ProductCard key={product.id} product={product} onAdd={addToCart} />
+                <ProductCard 
+                    key={product.id} 
+                    product={product} 
+                    onAdd={addToCart} 
+                    onZoom={(url) => setZoomImage(url)}
+                />
               ))}
-              {products.length === 0 && (
-                <div style={{ textAlign: 'center', gridColumn: '1 / -1', padding: '4rem 0' }}>
-                    <ShoppingBag size={48} color="var(--border)" style={{ marginBottom: '1rem' }} />
-                    <p style={{ color: 'var(--text-muted)' }}>No hay productos disponibles por ahora.</p>
-                </div>
-              )}
             </div>
           )}
         </div>
 
-        {/* Sidebar Cart (Desktop Only) */}
         <aside className="hide-on-mobile" style={{ width: '380px', position: 'sticky', top: '100px', alignSelf: 'flex-start' }}>
            <CartContent 
                 cart={cart} 
@@ -150,7 +147,7 @@ export default function StorePage() {
         </aside>
       </div>
 
-      {/* Floating Cart Button (Mobile Only) */}
+      {/* Floating Cart Button */}
       {cart.length > 0 && (
           <button className="cart-floating-btn show-on-mobile" onClick={() => setIsCartOpen(true)}>
               <ShoppingCart size={28} />
@@ -169,41 +166,30 @@ export default function StorePage() {
               display: 'flex',
               alignItems: 'flex-end'
           }}>
-              <div className="animate-fade-in" style={{
-                  background: 'white',
-                  width: '100%',
-                  maxHeight: '90vh',
-                  borderTopLeftRadius: '2rem',
-                  borderTopRightRadius: '2rem',
-                  padding: '2rem',
-                  overflowY: 'auto'
-              }}>
+              <div className="animate-fade-in" style={{ background: 'white', width: '100%', maxHeight: '90vh', borderTopLeftRadius: '2rem', borderTopRightRadius: '2rem', padding: '2rem', overflowY: 'auto' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                       <h2 style={{ fontSize: '1.5rem', margin: 0 }}>🛒 Tu Carrito</h2>
                       <button onClick={() => setIsCartOpen(false)} style={{ color: 'var(--text-muted)' }}><X size={24} /></button>
                   </div>
-                  <CartContent 
-                    cart={cart} 
-                    total={cartTotal} 
-                    onRemove={(id) => {
-                        removeFromCart(id);
-                        if (cart.length <= 1) setIsCartOpen(false);
-                    }} 
-                    onCheckout={handleCheckout} 
-                    status={checkoutStatus} 
-                  />
+                  <CartContent cart={cart} total={cartTotal} onRemove={removeFromCart} onCheckout={handleCheckout} status={checkoutStatus} />
               </div>
+          </div>
+      )}
+
+      {/* LIGHTBOX / ZOOM MODAL */}
+      {zoomImage && (
+          <div 
+            onClick={() => setZoomImage(null)}
+            style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.9)', zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out' }}
+          >
+              <button style={{ position: 'absolute', top: '2rem', right: '2rem', color: 'white' }}><X size={32} /></button>
+              <img src={zoomImage} style={{ maxWidth: '90vw', maxHeight: '90vh', objectFit: 'contain' }} alt="Zoom" />
           </div>
       )}
 
       {/* Checkout Toast */}
       {checkoutStatus && !isCartOpen && (
-          <div style={{
-              position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)',
-              background: 'white', padding: '1rem 2rem', borderRadius: '999px',
-              boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border)',
-              display: 'flex', alignItems: 'center', gap: '0.75rem', zIndex: 3000
-          }}>
+          <div style={{ position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)', background: 'white', padding: '1rem 2rem', borderRadius: '999px', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '0.75rem', zIndex: 3000 }}>
               <CheckCircle color="var(--accent)" />
               <span style={{ fontWeight: '600', fontSize: '0.9rem' }}>{checkoutStatus}</span>
           </div>
@@ -212,61 +198,93 @@ export default function StorePage() {
   );
 }
 
-function ProductCard({ product, onAdd }) {
+function ProductCard({ product, onAdd, onZoom }) {
+  const [currentImg, setCurrentImg] = useState(0);
   const [qty, setQty] = useState(1);
+  const images = product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls : [product.imageUrl];
   const isOutOfStock = product.stock <= 0;
+
+  const nextImg = (e) => { e.stopPropagation(); setCurrentImg((currentImg + 1) % images.length); };
+  const prevImg = (e) => { e.stopPropagation(); setCurrentImg((currentImg - 1 + images.length) % images.length); };
 
   return (
     <div className="card-premium" style={{ display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden' }}>
-      <div style={{ width: '100%', height: '260px', background: '#f8fafc', overflow: 'hidden', position: 'relative' }}>
+      {/* Galería Slider */}
+      <div style={{ width: '100%', height: '260px', background: '#f8fafc', overflow: 'hidden', position: 'relative', cursor: 'pointer' }} onClick={() => onZoom(images[currentImg])}>
         <img 
-            src={product.imageUrl} 
+            src={images[currentImg]} 
             alt={product.name} 
-            style={{ width: '100%', height: '100%', objectFit: 'contain', transition: 'transform 0.5s ease' }} 
-            onMouseOver={e => e.currentTarget.style.transform = 'scale(1.05)'}
-            onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
         />
+        
+        {/* Flechas de navegación */}
+        {images.length > 1 && (
+            <>
+                <button onClick={prevImg} style={arrowStyle} className="hover:bg-surface"><ChevronLeft size={20} /></button>
+                <button onClick={nextImg} style={{ ...arrowStyle, right: '0.5rem' }} className="hover:bg-surface"><ChevronRight size={20} /></button>
+                
+                {/* Dots / Puntos */}
+                <div style={{ position: 'absolute', bottom: '0.75rem', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '4px' }}>
+                    {images.map((_, i) => (
+                        <div key={i} style={{ width: '6px', height: '6px', borderRadius: '50%', background: i === currentImg ? 'var(--primary)' : 'var(--border)', transition: 'all 0.3s' }}></div>
+                    ))}
+                </div>
+            </>
+        )}
+
+        <button 
+           onClick={(e) => { e.stopPropagation(); onZoom(images[currentImg]); }}
+           style={{ position: 'absolute', top: '0.75rem', left: '0.75rem', background: 'rgba(255,255,255,0.8)', border: 'none', borderRadius: '50%', padding: '6px', display: 'flex', zIndex: 10 }}
+        >
+            <Maximize2 size={14} color="var(--text-main)" />
+        </button>
+
         {isOutOfStock && (
-            <div style={{ position: 'absolute', top: '1rem', right: '1rem', background: '#fee2e2', color: '#ef4444', padding: '0.25rem 0.75rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: '800' }}>
-                SIN STOCK
+            <div style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', background: '#fee2e2', color: '#ef4444', padding: '0.25rem 0.75rem', borderRadius: '999px', fontSize: '0.7rem', fontWeight: '800', zIndex: 10 }}>
+                AGOTADO
             </div>
         )}
       </div>
       
       <div style={{ padding: '1.5rem', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-        <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem', color: 'var(--text-main)' }}>{product.name}</h3>
-        <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1.25rem', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-            {product.description || "Sin descripción disponible."}
+        <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem', color: 'var(--text-main)' }}>{product.name}</h3>
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.25rem', height: '2.5rem', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+            {product.description || "Sin descripción."}
         </p>
         
         <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-main)' }}>${product.price.toLocaleString('es-AR')}</span>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: '600' }}>
-                Stock: {product.stock}
-            </div>
+            <span style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-main)' }}>${product.price.toLocaleString('es-AR')}</span>
+            <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: '700' }}>Stock: {product.stock}</span>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.25rem' }}>
             {!isOutOfStock && (
                 <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-subtle)', borderRadius: 'var(--rounded-md)', border: '1px solid var(--border)' }}>
-                    <button onClick={() => setQty(Math.max(1, qty - 1))} style={{ padding: '0.5rem' }}><Minus size={16} /></button>
-                    <span style={{ width: '2rem', textAlign: 'center', fontWeight: '700' }}>{qty}</span>
-                    <button onClick={() => setQty(Math.min(product.stock, qty + 1))} style={{ padding: '0.5rem' }}><Plus size={16} /></button>
+                    <button onClick={() => setQty(Math.max(1, qty - 1))} style={{ padding: '0.4rem' }}><Minus size={14} /></button>
+                    <span style={{ width: '1.5rem', textAlign: 'center', fontWeight: '700', fontSize: '0.9rem' }}>{qty}</span>
+                    <button onClick={() => setQty(Math.min(product.stock, qty + 1))} style={{ padding: '0.4rem' }}><Plus size={14} /></button>
                 </div>
             )}
             <button 
                 onClick={() => { onAdd(product, qty); setQty(1); }}
                 disabled={isOutOfStock}
                 className="btn-primary"
-                style={{ flex: 1, justifyContent: 'center', opacity: isOutOfStock ? 0.5 : 1 }}
+                style={{ flex: 1, justifyContent: 'center', fontSize: '0.85rem', padding: '0.6rem', opacity: isOutOfStock ? 0.5 : 1 }}
             >
-                {isOutOfStock ? "Agotado" : "Comprar ahora"}
+                {isOutOfStock ? "Agotado" : "Agregar"}
             </button>
         </div>
       </div>
     </div>
   );
 }
+
+const arrowStyle = {
+    position: 'absolute', top: '50%', transform: 'translateY(-50%)', left: '0.5rem',
+    background: 'rgba(255,255,255,0.7)', border: 'none', borderRadius: '50%',
+    width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    cursor: 'pointer', zIndex: 10, backdropFilter: 'blur(2px)'
+};
 
 function CartContent({ cart, total, onRemove, onCheckout, status }) {
     return (
@@ -281,29 +299,29 @@ function CartContent({ cart, total, onRemove, onCheckout, status }) {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxHeight: '400px', overflowY: 'auto', paddingRight: '0.5rem' }}>
                         {cart.map(item => (
                             <div key={item.id} style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                                <div style={{ width: '60px', height: '60px', background: 'var(--bg-subtle)', borderRadius: 'var(--rounded-md)', overflow: 'hidden' }}>
-                                    <img src={item.imageUrl} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                                <div style={{ width: '50px', height: '50px', background: 'var(--bg-subtle)', borderRadius: 'var(--rounded-md)', overflow: 'hidden' }}>
+                                    <img src={item.imageUrls?.[0] || item.imageUrl} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                                 </div>
                                 <div style={{ flex: 1 }}>
-                                    <p style={{ fontWeight: '700', fontSize: '0.95rem', margin: 0 }}>{item.name}</p>
-                                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>{item.quantity} x ${item.price.toLocaleString('es-AR')}</p>
+                                    <p style={{ fontWeight: '700', fontSize: '0.9rem', margin: 0 }}>{item.name}</p>
+                                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>{item.quantity} x ${item.price.toLocaleString('es-AR')}</p>
                                 </div>
-                                <button onClick={() => onRemove(item.id)} style={{ color: 'var(--error)' }}><X size={18} /></button>
+                                <button onClick={() => onRemove(item.id)} style={{ color: 'var(--error)' }}><X size={16} /></button>
                             </div>
                         ))}
                     </div>
 
                     <div style={{ marginTop: '2rem', borderTop: '2px dashed var(--border)', paddingTop: '1.5rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-                            <span style={{ fontSize: '1.1rem', color: 'var(--text-muted)', fontWeight: '500' }}>Total estimado</span>
-                            <span style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--primary)' }}>${total.toLocaleString('es-AR')}</span>
+                            <span style={{ fontSize: '1rem', color: 'var(--text-muted)', fontWeight: '500' }}>Total</span>
+                            <span style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--primary)' }}>${total.toLocaleString('es-AR')}</span>
                         </div>
                         <button 
                             onClick={onCheckout}
                             className="btn-primary" 
-                            style={{ width: '100%', justifyContent: 'center', padding: '1rem', borderRadius: 'var(--rounded-md)' }}
+                            style={{ width: '100%', justifyContent: 'center', padding: '0.75rem' }}
                         >
-                            Finalizar Compra <ArrowRight size={20} />
+                            Finalizar Compra <ArrowRight size={18} />
                         </button>
                     </div>
                 </>

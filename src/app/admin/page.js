@@ -13,11 +13,11 @@ import {
     Edit, 
     X, 
     Save, 
-    AlertCircle, 
     CheckCircle, 
     UserPlus,
     Lock,
-    ExternalLink
+    Image as ImageIcon,
+    UploadCloud
 } from "lucide-react";
 
 export default function AdminPage() {
@@ -29,8 +29,8 @@ export default function AdminPage() {
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
   const [description, setDescription] = useState("");
-  const [image, setImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
+  const [images, setImages] = useState([]); // Array de archivos File
+  const [imagePreviews, setImagePreviews] = useState([]); // Array de URLs (blobs o remotas)
   const [loading, setLoading] = useState(false);
 
   // Editing state
@@ -43,7 +43,7 @@ export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState(false);
 
   // UI state
-  const [activeTab, setActiveTab] = useState("products"); // "products" | "admins"
+  const [activeTab, setActiveTab] = useState("products");
   const [successMsg, setSuccessMsg] = useState("");
 
   useEffect(() => {
@@ -86,8 +86,8 @@ export default function AdminPage() {
     setPrice(String(product.price));
     setStock(String(product.stock));
     setDescription(product.description || "");
-    setImage(null);
-    setImagePreview(product.imageUrl);
+    setImages([]); // Se vacían los archivos nuevos al empezar a editar
+    setImagePreviews(product.imageUrls || [product.imageUrl] || []);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -97,16 +97,28 @@ export default function AdminPage() {
     setPrice("");
     setStock("");
     setDescription("");
-    setImage(null);
-    setImagePreview(null);
+    setImages([]);
+    setImagePreviews([]);
   };
 
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImage(file);
-      setImagePreview(URL.createObjectURL(file));
+    const files = Array.from(e.target.files);
+    if (files.length + imagePreviews.length > 5) {
+        alert("Podes subir un máximo de 5 fotos por producto.");
+        return;
     }
+
+    const newPreviews = files.map(file => URL.createObjectURL(file));
+    setImages(prev => [...prev, ...files]);
+    setImagePreviews(prev => [...prev, ...newPreviews]);
+  };
+
+  const removePreview = (index) => {
+      // Si estamos editando y quitamos una imagen que ya estaba online
+      setImagePreviews(prev => prev.filter((_, i) => i !== index));
+      // También quitar del array de archivos nuevos si corresponde
+      // Nota: Esto es simplificado, asume que los archivos nuevos están al final
+      setImages(prev => prev.filter((_, i) => i !== (index - (imagePreviews.length - images.length))));
   };
 
   const showSuccess = (msg) => {
@@ -120,23 +132,25 @@ export default function AdminPage() {
       alert("Completá al menos nombre, precio y stock.");
       return;
     }
-    if (!editingProduct && !image) {
-      alert("Agregá una foto del producto.");
+    if (imagePreviews.length === 0) {
+      alert("Agregá al menos una foto del producto.");
       return;
     }
     setLoading(true);
 
     try {
-      let imageUrl = editingProduct?.imageUrl || null;
+      // 1. Mantener las URLs que ya son remotas (las que no son blob:)
+      let finalUrls = imagePreviews.filter(url => url.startsWith('http'));
 
-      if (image) {
+      // 2. Subir las nuevas imágenes (las que hay en el estado 'images')
+      for (let imgFile of images) {
         const uploadRes = await fetch(
-          `/api/upload?filename=${encodeURIComponent(image.name)}`,
-          { method: "POST", body: image }
+          `/api/upload?filename=${encodeURIComponent(imgFile.name)}`,
+          { method: "POST", body: imgFile }
         );
-        if (!uploadRes.ok) throw new Error("Error subiendo imagen");
+        if (!uploadRes.ok) throw new Error("Error subiendo imagen: " + imgFile.name);
         const data = await uploadRes.json();
-        imageUrl = data.url;
+        finalUrls.push(data.url);
       }
 
       const productData = {
@@ -144,7 +158,8 @@ export default function AdminPage() {
         price: Number(price),
         stock: Number(stock),
         description,
-        imageUrl,
+        imageUrls: finalUrls,
+        imageUrl: finalUrls[0], // Mantener por compatibilidad con código viejo
         updatedAt: new Date().toISOString(),
       };
 
@@ -205,13 +220,13 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="container">
+    <div className="container" style={{ paddingBottom: '5rem' }}>
 
       {/* Header */}
       <div style={{ marginBottom: "3rem", display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-            <h1 style={{ fontSize: "2.25rem", color: "var(--text-main)" }}>Dashboard</h1>
-            <p style={{ color: "var(--text-muted)", margin: 0 }}>Gestioná tus productos y administradores.</p>
+            <h1 style={{ fontSize: "2.25rem", color: "var(--text-main)" }}>Panel Admin</h1>
+            <p style={{ color: "var(--text-muted)", margin: 0 }}>Cargá productos con múltiples fotos.</p>
         </div>
         <div style={{ background: 'var(--primary-light)', padding: '0.5rem 1rem', borderRadius: 'var(--rounded-md)', color: 'var(--primary)', fontWeight: '700', fontSize: '0.85rem' }}>
             {user.email}
@@ -231,175 +246,115 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Tabs Layout */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
         
-        {/* Navigation Tabs */}
         <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
-            <button 
-                onClick={() => setActiveTab('products')}
-                style={{ 
-                    padding: '0.5rem 1rem', 
-                    color: activeTab === 'products' ? 'var(--primary)' : 'var(--text-muted)',
-                    borderBottom: activeTab === 'products' ? '2px solid var(--primary)' : '2px solid transparent',
-                    fontWeight: '700',
-                    display: 'flex', alignItems: 'center', gap: '0.5rem'
-                }}
-            >
+            <button onClick={() => setActiveTab('products')} style={{ padding: '0.5rem 1rem', color: activeTab === 'products' ? 'var(--primary)' : 'var(--text-muted)', borderBottom: activeTab === 'products' ? '2px solid var(--primary)' : '2px solid transparent', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Package size={20} /> Productos
             </button>
-            <button 
-                onClick={() => setActiveTab('admins')}
-                style={{ 
-                    padding: '0.5rem 1rem', 
-                    color: activeTab === 'admins' ? 'var(--primary)' : 'var(--text-muted)',
-                    borderBottom: activeTab === 'admins' ? '2px solid var(--primary)' : '2px solid transparent',
-                    fontWeight: '700',
-                    display: 'flex', alignItems: 'center', gap: '0.5rem'
-                }}
-            >
+            <button onClick={() => setActiveTab('admins')} style={{ padding: '0.5rem 1rem', color: activeTab === 'admins' ? 'var(--primary)' : 'var(--text-muted)', borderBottom: activeTab === 'admins' ? '2px solid var(--primary)' : '2px solid transparent', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Users size={20} /> Administradores
             </button>
         </div>
 
-        {/* ===== TAB: PRODUCTOS ===== */}
         {activeTab === "products" && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 400px)', gap: '2rem', alignItems: 'start' }} className="admin-responsive-layout">
-                    
-                    {/* Lista Inventario */}
-                    <div style={{ order: 2 }}>
-                        <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Inventario ({products.length})</h2>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            {products.map(p => (
-                                <div key={p.id} className="card-premium" style={{ display: 'flex', gap: '1rem', alignItems: 'center', padding: '1rem' }}>
-                                    <div style={{ width: '64px', height: '64px', background: 'var(--bg-subtle)', borderRadius: 'var(--rounded-md)', overflow: 'hidden', flexShrink: 0 }}>
-                                        <img src={p.imageUrl} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                                    </div>
-                                    <div style={{ flex: 1, minWidth: 0 }}>
-                                        <h4 style={{ margin: 0, fontSize: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</h4>
-                                        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>${p.price.toLocaleString('es-AR')} • Stock: {p.stock}</p>
-                                    </div>
-                                    <div style={{ display: 'flex', gap: '0.25rem' }}>
-                                        <button onClick={() => startEdit(p)} style={{ padding: '0.5rem', color: 'var(--primary)' }} title="Editar"><Edit size={18} /></button>
-                                        <button onClick={() => handleDelete(p.id)} style={{ padding: '0.5rem', color: 'var(--error)' }} title="Borrar"><Trash2 size={18} /></button>
-                                    </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 400px)', gap: '2rem', alignItems: 'start' }} className="admin-responsive-layout">
+                
+                {/* Lista */}
+                <div style={{ order: 2 }}>
+                    <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Inventario ({products.length})</h2>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        {products.map(p => (
+                            <div key={p.id} className="card-premium" style={{ display: 'flex', gap: '1rem', alignItems: 'center', padding: '1rem' }}>
+                                <div style={{ width: '64px', height: '64px', background: 'var(--bg-subtle)', borderRadius: 'var(--rounded-md)', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <img src={p.imageUrls?.[0] || p.imageUrl} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                                 </div>
-                            ))}
-                            {products.length === 0 && <p style={{ color: 'var(--text-muted)', textAlign: 'center' }}>No hay productos cargados.</p>}
-                        </div>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <h4 style={{ margin: 0, fontSize: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</h4>
+                                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>${p.price} • Stock: {p.stock} • {p.imageUrls?.length || 1} fotos</p>
+                                </div>
+                                <div style={{ display: 'flex', gap: '0.25rem' }}>
+                                    <button onClick={() => startEdit(p)} style={{ padding: '0.5rem', color: 'var(--primary)' }}><Edit size={18} /></button>
+                                    <button onClick={() => handleDelete(p.id)} style={{ padding: '0.5rem', color: 'var(--error)' }}><Trash2 size={18} /></button>
+                                </div>
+                            </div>
+                        ))}
                     </div>
+                </div>
 
-                    {/* Formulario Sticky */}
-                    <div style={{ order: 1, position: 'sticky', top: '100px' }}>
-                        <div className="card-premium" style={{ background: editingProduct ? 'var(--primary-light)' : 'white' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
-                                <div>
-                                    <h3 style={{ margin: 0 }}>{editingProduct ? 'Editar Producto' : 'Nuevo Producto'}</h3>
-                                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Cargá los detalles del item.</p>
-                                </div>
-                                {editingProduct && <button onClick={cancelEdit} style={{ color: 'var(--text-muted)' }}><X size={20} /></button>}
+                {/* Form */}
+                <div style={{ order: 1 }}>
+                    <div className="card-premium" style={{ background: editingProduct ? 'var(--primary-light)' : 'white', position: 'sticky', top: '100px' }}>
+                        <h3 style={{ marginBottom: '1.5rem' }}>{editingProduct ? 'Editar' : 'Nuevo Producto'}</h3>
+                        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Nombre" style={inputStyle} required />
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                <input type="number" value={price} onChange={e => setPrice(e.target.value)} placeholder="Precio" style={inputStyle} required />
+                                <input type="number" value={stock} onChange={e => setStock(e.target.value)} placeholder="Stock" style={inputStyle} required />
+                            </div>
+                            <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Descripción" style={{ ...inputStyle, height: '80px' }} />
+                            
+                            <div style={{ border: '2px dashed var(--border)', padding: '1.5rem', borderRadius: 'var(--rounded-md)', textAlign: 'center', background: 'var(--bg-subtle)' }}>
+                                <UploadCloud size={32} color="var(--text-muted)" style={{ marginBottom: '0.5rem' }} />
+                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Subí hasta 5 fotos</p>
+                                <input type="file" multiple accept="image/*" onChange={handleImageChange} style={{ fontSize: '0.85rem' }} />
                             </div>
 
-                            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                <div>
-                                    <label style={labelStyle}>Nombre del producto</label>
-                                    <input type="text" value={name} onChange={e => setName(e.target.value)} required style={inputStyle} placeholder="Ej: Monitor 24\" />
+                            {imagePreviews.length > 0 && (
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.5rem' }}>
+                                    {imagePreviews.map((url, idx) => (
+                                        <div key={idx} style={{ position: 'relative', width: '100%', aspectRatio: '1', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                                            <img src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            <button 
+                                                type="button" 
+                                                onClick={() => removePreview(idx)}
+                                                style={{ position: 'absolute', top: 0, right: 0, background: 'rgba(239, 68, 68, 0.8)', color: 'white', padding: '2px', borderBottomLeftRadius: '4px' }}
+                                            >
+                                                <X size={12} />
+                                            </button>
+                                        </div>
+                                    ))}
                                 </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                    <div>
-                                        <label style={labelStyle}>Precio ($)</label>
-                                        <input type="number" value={price} onChange={e => setPrice(e.target.value)} required style={inputStyle} />
-                                    </div>
-                                    <div>
-                                        <label style={labelStyle}>Stock</label>
-                                        <input type="number" value={stock} onChange={e => setStock(e.target.value)} required style={inputStyle} />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label style={labelStyle}>Descripción</label>
-                                    <textarea value={description} onChange={e => setDescription(e.target.value)} style={{ ...inputStyle, minHeight: '80px' }} placeholder="Opcional..." />
-                                </div>
-                                <div>
-                                    <label style={labelStyle}>Imagen {imagePreview && '✓'}</label>
-                                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                                        <input type="file" onChange={handleImageChange} style={{ fontSize: '0.8rem', flex: 1 }} />
-                                        {imagePreview && (
-                                            <div style={{ width: '50px', height: '50px', background: 'white', border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden' }}>
-                                                <img src={imagePreview} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                                <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: '1rem' }}>
-                                    {loading ? 'Procesando...' : editingProduct ? 'Guardar Cambios' : 'Publicar Producto'}
+                            )}
+
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                {editingProduct && <button type="button" onClick={cancelEdit} className="btn-outline" style={{ flex: 1 }}>Cancelar</button>}
+                                <button type="submit" disabled={loading} className="btn-primary" style={{ flex: 2, justifyContent: 'center' }}>
+                                    {loading ? 'Subiendo...' : editingProduct ? 'Guardar' : 'Publicar'}
                                 </button>
-                            </form>
-                        </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
         )}
 
-        {/* ===== TAB: ADMINS ===== */}
         {activeTab === "admins" && (
-            <div className="card-premium animate-fade-in" style={{ maxWidth: '600px', margin: '0 auto', width: '100%' }}>
-                <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <UserPlus size={24} /> Gestionar Accesos
-                </h3>
-                
-                <form onSubmit={handleAddAdmin} style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
-                    <input type="email" value={newAdmin} onChange={e => setNewAdmin(e.target.value)} placeholder="Email del nuevo admin" style={inputStyle} />
-                    <button type="submit" className="btn-primary">Añadir</button>
+            <div className="card-premium" style={{ maxWidth: '500px', margin: '0 auto' }}>
+                <h3 style={{ marginBottom: '1.5rem' }}>Accesos Admin</h3>
+                <form onSubmit={handleAddAdmin} style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem' }}>
+                    <input type="email" value={newAdmin} onChange={e => setNewAdmin(e.target.value)} placeholder="Nuevo admin email" style={inputStyle} />
+                    <button type="submit" className="btn-primary"><Plus size={20} /></button>
                 </form>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    <div style={{ padding: '1rem', background: 'var(--bg-subtle)', borderRadius: 'var(--rounded-md)', display: 'flex', justifyContent: 'space-between', border: '1px dashed var(--primary)' }}>
-                        <span style={{ fontWeight: '700' }}>alberto.campagna@bue.edu.ar</span>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: '800' }}>DOMINIO PRINCIPAL</span>
+                {adminEmails.map(adm => (
+                    <div key={adm.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem', borderBottom: '1px solid var(--border)' }}>
+                        <span>{adm.email}</span>
+                        <button onClick={() => handleRemoveAdmin(adm.id)} style={{ color: 'var(--error)' }}><Trash2 size={16} /></button>
                     </div>
-                    {adminEmails.map(adm => (
-                        <div key={adm.id} style={{ padding: '1rem', background: 'white', border: '1px solid var(--border)', borderRadius: 'var(--rounded-md)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span>{adm.email}</span>
-                            <button onClick={() => handleRemoveAdmin(adm.id)} style={{ color: 'var(--error)' }}><Trash2 size={18} /></button>
-                        </div>
-                    ))}
-                </div>
+                ))}
             </div>
         )}
-
       </div>
 
-      {/* Media Query CSS simulation (as this is Next.js without TailWind, I'll add a style tag for the layout) */}
       <style jsx>{`
           @media (max-width: 900px) {
-              .admin-responsive-layout {
-                  grid-template-columns: 1fr !important;
-              }
-              .admin-responsive-layout > div {
-                  position: relative !important;
-                  top: 0 !important;
-              }
+              .admin-responsive-layout { grid-template-columns: 1fr !important; }
+              .admin-responsive-layout > div { position: relative !important; top: 0 !important; }
           }
       `}</style>
     </div>
   );
 }
 
-const labelStyle = {
-    fontSize: '0.85rem',
-    fontWeight: '700',
-    color: 'var(--text-muted)',
-    marginBottom: '0.4rem',
-    display: 'block'
-};
-
-const inputStyle = {
-    width: '100%',
-    padding: '0.75rem',
-    borderRadius: 'var(--rounded-md)',
-    border: '1px solid var(--border)',
-    fontSize: '0.95rem',
-    outline: 'none',
-    fontFamily: 'inherit'
-};
+const inputStyle = { width: '100%', padding: '0.75rem', borderRadius: 'var(--rounded-md)', border: '1px solid var(--border)', outline: 'none', fontFamily: 'inherit' };
+const labelStyle = { fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '0.25rem', display: 'block' };
