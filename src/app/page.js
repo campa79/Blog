@@ -91,7 +91,7 @@ export default function StorePage() {
           await updateDoc(productRef, { stock: newStock });
       }
 
-      setCheckoutStatus("¡Compra exitosa! Nos comunicaremos al administrador con tus datos.");
+      setCheckoutStatus("Tu compra fue realizada con éxito. Nos contactaremos a la brevedad.");
       setCart([]);
       fetchProducts(); // refresh stock
     } catch (error) {
