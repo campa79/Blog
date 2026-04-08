@@ -12,11 +12,12 @@ const geistMono = Geist_Mono({
 });
 
 import { AuthProvider } from "@/context/AuthContext";
+import { CartProvider } from "@/context/CartContext";
 import Navbar from "@/components/Navbar";
 
 export const metadata = {
-  title: "desarrollodesoftware.ar | Blog de Tecnología",
-  description: "Blog moderno sobre desarrollo de software conPosts, imágenes y reacciones.",
+  title: "desarrollodesoftware.ar | Tienda & Blog",
+  description: "E-commerce y Blog moderno sobre desarrollo de software.",
 };
 
 export default function RootLayout({ children }) {
@@ -24,10 +25,12 @@ export default function RootLayout({ children }) {
     <html lang="es">
       <body>
         <AuthProvider>
-          <Navbar />
-          <main className="container">
-            {children}
-          </main>
+          <CartProvider>
+            <Navbar />
+            <main className="container">
+              {children}
+            </main>
+          </CartProvider>
         </AuthProvider>
       </body>
     </html>
