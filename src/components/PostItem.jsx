@@ -1,10 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { doc, updateDoc, deleteDoc, increment } from "firebase/firestore";
 import Image from "next/image";
-import { MoreVertical, Trash2, Edit2, Clock, BookOpen, Smile } from "lucide-react";
+import { MoreVertical, Trash2, Edit2, Clock, BookOpen, Smile, ChevronLeft, ChevronRight } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import PostForm from "./PostForm";
 
@@ -12,6 +12,10 @@ export default function PostItem({ post }) {
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  
+  const touchStartX = useRef(null);
+  const touchEndX = useRef(null);
   
   const isAuthor = user && post.authorEmail && user.email.toLowerCase() === post.authorEmail.toLowerCase();
   
@@ -21,6 +25,9 @@ export default function PostItem({ post }) {
 
   const wordCount = post.content.split(/\s+/).length;
   const readTime = Math.max(1, Math.ceil(wordCount / 200));
+
+  // Normalize media array for backward compatibility
+  const mediaItems = post.media || (post.imageUrl ? [{ url: post.imageUrl, type: 'image' }] : []);
 
   const handleReaction = async (emoji) => {
     if (!user) return alert("Debes iniciar sesión para reaccionar.");
@@ -34,6 +41,40 @@ export default function PostItem({ post }) {
     if (confirm("¿Estás seguro de que quieres borrar este post?")) {
       await deleteDoc(doc(db, "posts", post.id));
     }
+  };
+
+  const nextMedia = () => {
+    if (currentIndex < mediaItems.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+    }
+  };
+
+  const prevMedia = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+    }
+  };
+
+  // Swipe handlers
+  const onTouchStart = (e) => {
+    touchStartX.current = e.targetTouches[0].clientX;
+  };
+
+  const onTouchMove = (e) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStartX.current || !touchEndX.current) return;
+    const distance = touchStartX.current - touchEndX.current;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe) nextMedia();
+    if (isRightSwipe) prevMedia();
+
+    touchStartX.current = null;
+    touchEndX.current = null;
   };
 
   if (isEditing) {
@@ -55,7 +96,7 @@ export default function PostItem({ post }) {
           {post.authorPhoto ? (
             <Image 
                 src={post.authorPhoto} 
-                alt={post.authorName} 
+                alt={post.authorName || "User"} 
                 width={44} 
                 height={44} 
                 style={{ borderRadius: '50%', border: '2px solid var(--primary-light)' }} 
@@ -115,9 +156,61 @@ export default function PostItem({ post }) {
         <ReactMarkdown>{post.content}</ReactMarkdown>
       </div>
 
-      {post.imageUrl && (
-        <div style={{ borderRadius: 'var(--rounded-md)', overflow: 'hidden', marginBottom: '1.5rem', border: '1px solid var(--border)' }}>
-            <img src={post.imageUrl} alt="Post content" style={{ width: '100%', height: 'auto', display: 'block' }} loading="lazy" />
+      {mediaItems.length > 0 && (
+        <div 
+          className="media-container"
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        >
+          {mediaItems.map((item, index) => (
+            <div 
+              key={index} 
+              style={{ 
+                display: index === currentIndex ? 'flex' : 'none',
+                width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center'
+              }}
+            >
+              {item.type === 'video' ? (
+                <video 
+                  src={item.url} 
+                  controls 
+                  className="media-item"
+                  playsInline
+                />
+              ) : (
+                <img src={item.url} alt={`Media ${index}`} className="media-item" />
+              )}
+            </div>
+          ))}
+
+          {/* Navigation Arrows */}
+          {mediaItems.length > 1 && (
+            <>
+              {currentIndex > 0 && (
+                <button className="carousel-nav-btn left" onClick={prevMedia}>
+                  <ChevronLeft size={24} />
+                </button>
+              )}
+              {currentIndex < mediaItems.length - 1 && (
+                <button className="carousel-nav-btn right" onClick={nextMedia}>
+                  <ChevronRight size={24} />
+                </button>
+              )}
+            </>
+          )}
+          
+          {/* Progress Indicator */}
+          {mediaItems.length > 1 && (
+            <div style={{
+              position: 'absolute', bottom: '1rem', right: '1rem',
+              backgroundColor: 'rgba(15, 23, 42, 0.6)', color: 'white',
+              padding: '4px 10px', borderRadius: '20px', fontSize: '0.75rem',
+              fontWeight: '600', backdropFilter: 'blur(4px)'
+            }}>
+              {currentIndex + 1} / {mediaItems.length}
+            </div>
+          )}
         </div>
       )}
 

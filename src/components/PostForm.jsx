@@ -3,54 +3,77 @@ import { useState, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp, updateDoc, doc } from "firebase/firestore";
-import { Image as ImageIcon, Send, X, Loader2 } from "lucide-react";
+import { Image as ImageIcon, Video, Send, X, Loader2 } from "lucide-react";
 
 export default function PostForm({ existingPost = null, onComplete = () => {} }) {
   const { user } = useAuth();
   const [content, setContent] = useState(existingPost?.content || "");
-  const [image, setImage] = useState(null);
-  const [preview, setPreview] = useState(existingPost?.imageUrl || null);
+  const [mediaFiles, setMediaFiles] = useState([]);
+  const [previews, setPreviews] = useState(existingPost?.media || (existingPost?.imageUrl ? [{ url: existingPost.imageUrl, type: 'image' }] : []));
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef();
 
   if (!user) return null;
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImage(file);
-      setPreview(URL.createObjectURL(file));
+  const handleMediaChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      const newMediaFiles = [...mediaFiles, ...files];
+      setMediaFiles(newMediaFiles);
+
+      const newPreviews = files.map(file => ({
+        url: URL.createObjectURL(file),
+        type: file.type.startsWith('video') ? 'video' : 'image',
+        file: file
+      }));
+      setPreviews([...previews, ...newPreviews]);
     }
   };
 
-  const removeImage = () => {
-    setImage(null);
-    setPreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+  const removeMedia = (index) => {
+    const newPreviews = [...previews];
+    const itemToRemove = newPreviews[index];
+    
+    // If it was a newly added file, remove it from mediaFiles too
+    if (itemToRemove.file) {
+      const newMediaFiles = mediaFiles.filter(f => f !== itemToRemove.file);
+      setMediaFiles(newMediaFiles);
+    }
+    
+    newPreviews.splice(index, 1);
+    setPreviews(newPreviews);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!content.trim() && !image && !existingPost?.imageUrl) return;
+    if (!content.trim() && previews.length === 0) return;
 
     setLoading(true);
     try {
-      let imageUrl = existingPost?.imageUrl || "";
+      const finalMedia = [];
 
-      if (image) {
-        const response = await fetch(`/api/upload?filename=${encodeURIComponent(image.name)}`, {
-          method: 'POST',
-          body: image,
-        });
+      // Loop through previews to decide what to upload and what to keep
+      for (const item of previews) {
+        if (item.file) {
+          // It's a new file, upload it
+          const response = await fetch(`/api/upload?filename=${encodeURIComponent(item.file.name)}`, {
+            method: 'POST',
+            body: item.file,
+          });
 
-        if (!response.ok) throw new Error('Upload failed');
-        const blob = await response.json();
-        imageUrl = blob.url;
+          if (!response.ok) throw new Error('Upload failed');
+          const blob = await response.json();
+          finalMedia.push({ url: blob.url, type: item.type });
+        } else {
+          // It's an existing URL
+          finalMedia.push({ url: item.url, type: item.type });
+        }
       }
 
       const postData = {
         content: content.trim(),
-        imageUrl: imageUrl,
+        media: finalMedia,
+        imageUrl: finalMedia.length > 0 && finalMedia[0].type === 'image' ? finalMedia[0].url : (existingPost?.imageUrl || ""),
         authorName: user.displayName || user.email.split("@")[0],
         authorEmail: user.email,
         authorPhoto: user.photoURL,
@@ -68,8 +91,8 @@ export default function PostForm({ existingPost = null, onComplete = () => {} })
       }
 
       setContent("");
-      setImage(null);
-      setPreview(null);
+      setMediaFiles([]);
+      setPreviews([]);
       if (fileInputRef.current) fileInputRef.current.value = "";
       onComplete();
     } catch (error) {
@@ -91,22 +114,26 @@ export default function PostForm({ existingPost = null, onComplete = () => {} })
           style={{ width: '100%', border: 'none', outline: 'none', resize: 'none', fontSize: '1.1rem', marginBottom: '1rem', fontFamily: 'inherit' }}
         />
 
-        {preview && (
-          <div style={{ position: 'relative', marginBottom: '1rem', borderRadius: 'var(--rounded-md)', overflow: 'hidden' }}>
-            <img src={preview} alt="Preview" style={{ width: '100%', height: 'auto', display: 'block', filter: loading ? 'grayscale(0.5)' : 'none' }} />
-            {!loading && (
-              <button
-                type="button"
-                onClick={removeImage}
-                style={{
-                  position: 'absolute', top: '10px', right: '10px',
-                  backgroundColor: 'rgba(15, 23, 42, 0.6)', color: 'white',
-                  borderRadius: '50%', padding: '6px', backdropFilter: 'blur(4px)'
-                }}
-              >
-                <X size={18} />
-              </button>
-            )}
+        {previews.length > 0 && (
+          <div className="previews-grid">
+            {previews.map((item, index) => (
+              <div key={index} className="preview-item">
+                {item.type === 'video' ? (
+                  <video src={item.url} muted />
+                ) : (
+                  <img src={item.url} alt={`Preview ${index}`} />
+                )}
+                {!loading && (
+                  <button
+                    type="button"
+                    onClick={() => removeMedia(index)}
+                    className="preview-remove-btn"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+            ))}
           </div>
         )}
 
@@ -118,23 +145,27 @@ export default function PostForm({ existingPost = null, onComplete = () => {} })
               onClick={() => fileInputRef.current.click()}
               disabled={loading}
               style={{ padding: '0.5rem', borderRadius: '50%', width: '42px', height: '42px', display: 'grid', placeItems: 'center' }}
-              title="Añadir imagen"
+              title="Añadir fotos o videos"
             >
-              <ImageIcon size={20} />
+              <div style={{ position: 'relative' }}>
+                <ImageIcon size={20} style={{ position: 'absolute', top: -5, left: -5 }} />
+                <Video size={20} style={{ position: 'absolute', bottom: -5, right: -5, opacity: 0.7 }} />
+              </div>
             </button>
             <input
               type="file"
               hidden
               ref={fileInputRef}
-              accept="image/*"
-              onChange={handleImageChange}
+              accept="image/*,video/*"
+              multiple
+              onChange={handleMediaChange}
             />
           </div>
 
           <button
             type="submit"
             className="btn-primary"
-            disabled={loading || (!content.trim() && !image && !existingPost?.imageUrl)}
+            disabled={loading || (!content.trim() && previews.length === 0)}
           >
             {loading ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
             <span>{existingPost ? "Actualizar" : "Publicar"}</span>

@@ -73,9 +73,16 @@ export default function CartSidebar() {
                     <button 
                         onClick={handleCheckout}
                         className="btn-primary" 
-                        style={{ width: '100%', justifyContent: 'center', padding: '1.25rem', borderRadius: 'var(--rounded-md)', fontSize: '1.1rem' }}
+                        style={{ width: '100%', justifyContent: 'center', padding: '1.25rem', borderRadius: 'var(--rounded-md)', fontSize: '1.1rem', marginBottom: '1rem' }}
                     >
                         Confirmar Pedido <ArrowRight size={22} />
+                    </button>
+                    <button 
+                        onClick={() => setIsCartOpen(false)}
+                        className="btn-outline" 
+                        style={{ width: '100%', justifyContent: 'center', padding: '1rem', borderRadius: 'var(--rounded-md)', fontSize: '1rem', border: '1px solid var(--border)' }}
+                    >
+                        Seguir Comprando
                     </button>
                 </div>
             )}
