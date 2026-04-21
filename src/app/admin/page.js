@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, getDocs, updateDoc, doc, deleteDoc } from "firebase/firestore";
+import { collection, addDoc, getDocs, updateDoc, doc, deleteDoc, getDoc, setDoc } from "firebase/firestore";
 import { 
     Package, 
     Users, 
@@ -52,20 +52,40 @@ export default function AdminPage() {
   }, [user]);
 
   const checkAdmin = async () => {
-    if (user.email === "alberto.campagna@bue.edu.ar") {
+    const email = user.email.toLowerCase().trim();
+    
+    // Superadmin maestro
+    if (email === "alberto.campagna@bue.edu.ar") {
       setIsAdmin(true);
       fetchProducts();
       fetchAdmins();
       return;
     }
-    const q = collection(db, "admins");
-    const snap = await getDocs(q);
-    const listed = snap.docs.map((d) => d.data().email);
-    if (listed.includes(user.email)) {
-      setIsAdmin(true);
-      fetchProducts();
-      fetchAdmins();
-    } else {
+
+    try {
+      // Intento búsqueda directa por ID (email)
+      const adminRef = doc(db, "admins", email);
+      const adminSnap = await getDoc(adminRef);
+
+      if (adminSnap.exists()) {
+        setIsAdmin(true);
+        fetchProducts();
+        fetchAdmins();
+      } else {
+        // Fallback: búsqueda por campo email (para admins viejos)
+        const snap = await getDocs(collection(db, "admins"));
+        const listed = snap.docs.map((d) => d.data().email?.toLowerCase().trim());
+        
+        if (listed.includes(email)) {
+          setIsAdmin(true);
+          fetchProducts();
+          fetchAdmins();
+        } else {
+          router.push("/");
+        }
+      }
+    } catch (error) {
+      console.error("Error verificando admin:", error);
       router.push("/");
     }
   };
@@ -194,7 +214,12 @@ export default function AdminPage() {
   const handleAddAdmin = async (e) => {
     e.preventDefault();
     if (!newAdmin) return;
-    await addDoc(collection(db, "admins"), { email: newAdmin });
+    const cleanEmail = newAdmin.toLowerCase().trim();
+    // Usamos el email como ID para que las reglas de seguridad sean más eficientes
+    await setDoc(doc(db, "admins", cleanEmail), { 
+      email: cleanEmail,
+      addedAt: new Date().toISOString()
+    });
     setNewAdmin("");
     fetchAdmins();
     showSuccess("✅ Administrador agregado");
