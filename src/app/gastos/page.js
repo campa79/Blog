@@ -346,7 +346,7 @@ export default function GastosPage() {
                                     </div>
                                 ) : (
                                     expenses.map(exp => (
-                                        <div key={exp.id} className="expense-item">
+                                        <div key={exp.id} className="expense-item animate-slide-in">
                                             <div style={{ flex: 1 }}>
                                                 <h4 style={{ margin: 0, fontSize: '1rem' }}>{exp.category}</h4>
                                                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{new Date(exp.createdAt).toLocaleDateString()}</span>
@@ -370,29 +370,83 @@ export default function GastosPage() {
 
                     {/* Right Column: Widgets */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                        <div className="card-premium glass" style={{ background: 'var(--primary)', color: 'white' }}>
+                        <div className="card-premium" style={{ background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)', color: 'white', border: 'none' }}>
                             <DollarSign size={32} style={{ marginBottom: '1rem', opacity: 0.8 }} />
                             <span style={{ fontSize: '0.85rem', opacity: 0.8, fontWeight: '700' }}>DISPONIBLE PARA AHORRO</span>
-                            <h2 style={{ fontSize: '2rem', margin: '0.5rem 0' }}>${savings.toLocaleString()}</h2>
+                            <h2 style={{ fontSize: '2.5rem', margin: '0.5rem 0', fontWeight: '800' }}>${savings.toLocaleString()}</h2>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: '700' }}>
                                 <TrendingUp size={16} /> {savingsPercent.toFixed(1)}% del sueldo
                             </div>
                         </div>
 
-                        <div className="card-premium">
-                            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '700' }}>TOTAL GASTADO</span>
-                            <h2 style={{ fontSize: '1.75rem', margin: '0.5rem 0', color: 'var(--error)' }}>${totalExpenses.toLocaleString()}</h2>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-muted)' }}>
-                                <TrendingDown size={16} /> {expensePercent.toFixed(1)}% del sueldo
-                            </div>
-                        </div>
+                        {/* Category Distribution Chart */}
+                        {expenses.length > 0 && (
+                            <div className="card-premium animate-fade-in">
+                                <h4 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <PieChart size={18} className="text-primary" /> Distribución
+                                </h4>
+                                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+                                    <svg width="160" height="160" viewBox="0 0 42 42" style={{ transform: 'rotate(-90deg)' }}>
+                                        <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="var(--bg-subtle)" strokeWidth="4"></circle>
+                                        {/* Simplified SVG Chart Logic: showing largest category or generic segment if many */}
+                                        {(() => {
+                                            const total = expenses.reduce((s, e) => s + e.amount, 0);
+                                            let offset = 0;
+                                            const colors = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+                                            
+                                            // Group by category for chart
+                                            const grouped = expenses.reduce((acc, exp) => {
+                                                acc[exp.category] = (acc[acc] || 0) + exp.amount;
+                                                return acc;
+                                            }, {});
 
-                        <div className="card-premium" style={{ background: 'var(--bg-subtle)' }}>
-                            <h4 style={{ marginBottom: '1rem' }}>Consejo Financiero</h4>
-                            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>
-                                {savingsPercent > 20 ? 
-                                    "¡Excelente! Estás ahorrando más del 20% de tus ingresos. Seguí así." : 
-                                    "Intentá reducir gastos hormiga para alcanzar un ahorro mensual del 15% al 20%."
+                                            return Object.entries(grouped).slice(0, 6).map(([cat, amt], i) => {
+                                                const percent = (amt / total) * 100;
+                                                const dashArray = `${percent} ${100 - percent}`;
+                                                const currentOffset = 100 - offset;
+                                                offset += percent;
+                                                return (
+                                                    <circle 
+                                                        key={cat}
+                                                        cx="21" cy="21" r="15.915" 
+                                                        fill="transparent" 
+                                                        stroke={colors[i % colors.length]} 
+                                                        strokeWidth="5" 
+                                                        strokeDasharray={dashArray} 
+                                                        strokeDashoffset={currentOffset}
+                                                    ></circle>
+                                                );
+                                            });
+                                        })()}
+                                    </svg>
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                    {Object.entries(expenses.reduce((acc, exp) => {
+                                        acc[exp.category] = (acc[exp.category] || 0) + exp.amount;
+                                        return acc;
+                                    }, {})).slice(0, 4).map(([cat, amt], i) => (
+                                        <div key={cat} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: ['#2563eb', '#10b981', '#f59e0b', '#ef4444'][i % 4] }}></div>
+                                                <span style={{ fontWeight: '600', color: 'var(--text-muted)' }}>{cat}</span>
+                                            </div>
+                                            <span style={{ fontWeight: '800' }}>${amt.toLocaleString()}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="card-premium" style={{ background: 'var(--bg-subtle)', border: '1px dashed var(--border)' }}>
+                            <h4 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <CheckCircle2 size={18} className="text-accent" /> Estado
+                            </h4>
+                            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.6' }}>
+                                {savingsPercent > 25 ? 
+                                    "¡Nivel Maestro! Tu ahorro es superior al promedio. Estás construyendo un fondo sólido." : 
+                                    savingsPercent > 10 ? 
+                                    "Buen camino. Intentá automatizar una parte de ese ahorro a principios de mes." :
+                                    "Momento de revisar prioridades. Buscá gastos que puedas optimizar para llegar al 10% de ahorro."
                                 }
                             </p>
                         </div>
@@ -400,56 +454,52 @@ export default function GastosPage() {
                 </div>
             ) : (
                 /* Annual View */
-                <div className="card-premium animate-fade-in">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                        <h3 style={{ margin: 0 }}>Resumen Anual {yearStr}</h3>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                             <button onClick={() => setCurrentDate(new Date(currentDate.setFullYear(currentDate.getFullYear() - 1)))} className="btn-icon"><ChevronLeft /></button>
-                             <span style={{ fontWeight: '800', fontSize: '1.2rem', padding: '0 1rem' }}>{yearStr}</span>
-                             <button onClick={() => setCurrentDate(new Date(currentDate.setFullYear(currentDate.getFullYear() + 1)))} className="btn-icon"><ChevronRight /></button>
+                <div className="card-premium animate-fade-in" style={{ padding: '2rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
+                        <div>
+                            <h2 style={{ margin: 0, fontSize: '1.75rem' }}>Dashboard Anual {yearStr}</h2>
+                            <p style={{ color: 'var(--text-muted)', margin: 0 }}>Análisis de rendimiento por mes.</p>
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-subtle)', padding: '0.5rem', borderRadius: 'var(--rounded-md)' }}>
+                             <button onClick={() => setCurrentDate(new Date(currentDate.setFullYear(currentDate.getFullYear() - 1)))} className="btn-icon small"><ChevronLeft size={18} /></button>
+                             <span style={{ fontWeight: '800', fontSize: '1.1rem', padding: '0 1rem', display: 'flex', alignItems: 'center' }}>{yearStr}</span>
+                             <button onClick={() => setCurrentDate(new Date(currentDate.setFullYear(currentDate.getFullYear() + 1)))} className="btn-icon small"><ChevronRight size={18} /></button>
                         </div>
                     </div>
 
                     <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 0.75rem' }}>
                             <thead>
-                                <tr style={{ borderBottom: '2px solid var(--border)' }}>
+                                <tr style={{ textAlign: 'left' }}>
                                     <th style={thStyle}>Mes</th>
-                                    <th style={thStyle}>Sueldo Neto</th>
-                                    <th style={thStyle}>Gastos Totales</th>
-                                    <th style={thStyle}>Ahorro</th>
-                                    <th style={thStyle}>% Ahorro</th>
+                                    <th style={thStyle}>Ingreso</th>
+                                    <th style={thStyle}>Egresos</th>
+                                    <th style={thStyle}>Saldo</th>
+                                    <th style={thStyle}>Desempeño</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {annualData.map(m => (
-                                    <tr key={m.month} style={{ borderBottom: '1px solid var(--border)', background: m.salary > 0 ? 'transparent' : 'var(--bg-subtle)', opacity: m.salary > 0 ? 1 : 0.5 }}>
-                                        <td style={tdStyle}><strong>{m.monthName}</strong></td>
+                                    <tr key={m.month} className="table-row-hover" style={{ background: m.salary > 0 ? 'var(--bg-subtle)' : 'transparent', opacity: m.salary > 0 ? 1 : 0.4 }}>
+                                        <td style={{ ...tdStyle, borderRadius: 'var(--rounded-md) 0 0 var(--rounded-md)', fontWeight: '800', textTransform: 'capitalize' }}>
+                                            {m.monthName}
+                                        </td>
                                         <td style={tdStyle}>${m.salary.toLocaleString()}</td>
-                                        <td style={tdStyle}><span style={{ color: 'var(--error)' }}>-${m.expenses.toLocaleString()}</span></td>
-                                        <td style={tdStyle}><span style={{ color: 'var(--accent)', fontWeight: '700' }}>${m.savings.toLocaleString()}</span></td>
-                                        <td style={tdStyle}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                <div style={{ flex: 1, height: '8px', background: 'var(--border)', borderRadius: '4px', overflow: 'hidden', minWidth: '60px' }}>
-                                                    <div style={{ height: '100%', background: 'var(--accent)', width: `${m.savingsPercent}%` }}></div>
+                                        <td style={{ ...tdStyle, color: 'var(--error)', fontWeight: '600' }}>-${m.expenses.toLocaleString()}</td>
+                                        <td style={{ ...tdStyle, color: m.savings >= 0 ? 'var(--accent)' : 'var(--error)', fontWeight: '800' }}>
+                                            {m.savings >= 0 ? '+' : ''}${m.savings.toLocaleString()}
+                                        </td>
+                                        <td style={{ ...tdStyle, borderRadius: '0 var(--rounded-md) var(--rounded-md) 0' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                                <div style={{ flex: 1, height: '10px', background: 'rgba(0,0,0,0.05)', borderRadius: '5px', overflow: 'hidden', minWidth: '80px' }}>
+                                                    <div style={{ height: '100%', background: m.savingsPercent > 20 ? 'var(--accent)' : 'var(--primary)', width: `${m.savingsPercent}%`, transition: 'width 1s ease' }}></div>
                                                 </div>
-                                                <span style={{ fontWeight: '700' }}>{m.savingsPercent.toFixed(0)}%</span>
+                                                <span style={{ fontWeight: '800', fontSize: '0.85rem' }}>{m.savingsPercent.toFixed(0)}%</span>
                                             </div>
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
-                            <tfoot>
-                                <tr style={{ background: 'var(--primary-light)', color: 'var(--primary)', fontWeight: '800' }}>
-                                    <td style={tdStyle}>TOTAL ANUAL</td>
-                                    <td style={tdStyle}>${annualData.reduce((s, m) => s + m.salary, 0).toLocaleString()}</td>
-                                    <td style={tdStyle}>${annualData.reduce((s, m) => s + m.expenses, 0).toLocaleString()}</td>
-                                    <td style={tdStyle}>${annualData.reduce((s, m) => s + m.savings, 0).toLocaleString()}</td>
-                                    <td style={tdStyle}>
-                                        Promedio: {(annualData.reduce((s, m) => s + m.savingsPercent, 0) / 12).toFixed(1)}%
-                                    </td>
-                                </tr>
-                            </tfoot>
                         </table>
                     </div>
                 </div>
