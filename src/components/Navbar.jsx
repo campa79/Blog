@@ -26,7 +26,12 @@ export default function Navbar() {
           <div className="hide-on-mobile" style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
             <Link href="/" className="nav-link">Tienda</Link>
             <Link href="/blog" className="nav-link">Blog</Link>
-            {user && <Link href="/admin" className="nav-link">Admin</Link>}
+            {user && (
+              <>
+                <Link href="/gastos" className="nav-link">Gastos</Link>
+                <Link href="/admin" className="nav-link">Admin</Link>
+              </>
+            )}
           </div>
 
           {/* Actions */}
@@ -90,9 +95,14 @@ export default function Navbar() {
                 <Newspaper size={20} /> Blog
             </Link>
             {user && (
+              <>
+                <Link href="/gastos" className="nav-link" onClick={() => setIsOpen(false)} style={{ fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <ShoppingCart size={20} /> Mis Gastos
+                </Link>
                 <Link href="/admin" className="nav-link" onClick={() => setIsOpen(false)} style={{ fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <LayoutDashboard size={20} /> Panel Admin
                 </Link>
+              </>
             )}
             <hr style={{ border: 'none', borderTop: '1px solid var(--border)' }} />
             {user ? (
