@@ -298,3 +298,28 @@ h3 { font-size: 1.25rem; }
   cursor: pointer;
   font-size: 12px;
 }
+/* Gastos Specific Animations & Table Styles */
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease forwards;
+}
+
+.table-row-hover {
+  transition: all 0.2s ease;
+}
+
+.table-row-hover:hover {
+  background-color: white !important;
+  transform: scale(1.01);
+  box-shadow: var(--shadow-sm);
+  z-index: 5;
+  position: relative;
+}
+
+.btn-icon.small {
+    padding: 0;
+}
