@@ -192,68 +192,50 @@ export default function GastosPage() {
         <div className="container" style={{ paddingBottom: '5rem' }}>
             
             {/* Header & View Toggle */}
-            <div style={{ marginBottom: "3rem", display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginTop: '2rem' }}>
-                <div>
-                    <h1 style={{ fontSize: "2.5rem", color: "var(--text-main)", display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <Wallet className="text-primary" size={40} /> Mis Gastos
+            <div style={{ marginBottom: "2rem", display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginTop: '1rem' }}>
+                <div style={{ flex: '1 1 300px' }}>
+                    <h1 className="title-responsive" style={{ color: "var(--text-main)", display: 'flex', alignItems: 'center', gap: '0.75rem', margin: 0 }}>
+                        <Wallet className="text-primary" size={32} /> Mis Gastos
                     </h1>
-                    <p style={{ color: "var(--text-muted)", margin: 0 }}>Gestioná tu economía personal de forma privada.</p>
+                    <p style={{ color: "var(--text-muted)", margin: '0.25rem 0 0 0', fontSize: '0.9rem' }}>Gestión privada de finanzas.</p>
                 </div>
                 
-                <div style={{ display: 'flex', background: 'var(--bg-subtle)', padding: '0.4rem', borderRadius: 'var(--rounded-md)', border: '1px solid var(--border)' }}>
+                <div className="view-toggle-container">
                     <button 
                         onClick={() => setIsAnnualView(false)}
-                        style={{ 
-                            padding: '0.6rem 1.25rem', 
-                            borderRadius: 'var(--rounded-sm)', 
-                            fontSize: '0.9rem', 
-                            fontWeight: '700',
-                            background: !isAnnualView ? 'white' : 'transparent',
-                            color: !isAnnualView ? 'var(--primary)' : 'var(--text-muted)',
-                            boxShadow: !isAnnualView ? 'var(--shadow-sm)' : 'none',
-                            display: 'flex', alignItems: 'center', gap: '0.5rem'
-                        }}
+                        className={`toggle-btn ${!isAnnualView ? 'active' : ''}`}
                     >
-                        <Calendar size={18} /> Mensual
+                        <Calendar size={16} /> Mensual
                     </button>
                     <button 
                         onClick={() => setIsAnnualView(true)}
-                        style={{ 
-                            padding: '0.6rem 1.25rem', 
-                            borderRadius: 'var(--rounded-sm)', 
-                            fontSize: '0.9rem', 
-                            fontWeight: '700',
-                            background: isAnnualView ? 'white' : 'transparent',
-                            color: isAnnualView ? 'var(--primary)' : 'var(--text-muted)',
-                            boxShadow: isAnnualView ? 'var(--shadow-sm)' : 'none',
-                            display: 'flex', alignItems: 'center', gap: '0.5rem'
-                        }}
+                        className={`toggle-btn ${isAnnualView ? 'active' : ''}`}
                     >
-                        <BarChart3 size={18} /> Anual
+                        <BarChart3 size={16} /> Anual
                     </button>
                 </div>
             </div>
 
             {!isAnnualView ? (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '2rem' }} className="responsive-layout">
+                <div className="responsive-layout">
                     
                     {/* Left Column: Management */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                         
                         {/* Month Selector & Salary Card */}
-                        <div className="card-premium" style={{ borderLeft: '5px solid var(--primary)' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                    <button onClick={() => changeMonth(-1)} className="btn-icon"><ChevronLeft /></button>
-                                    <h3 style={{ margin: 0, textTransform: 'capitalize', minWidth: '150px', textAlign: 'center' }}>
+                        <div className="card-premium" style={{ borderLeft: '5px solid var(--primary)', padding: '1.25rem' }}>
+                            <div className="salary-header">
+                                <div className="month-nav">
+                                    <button onClick={() => changeMonth(-1)} className="btn-icon small"><ChevronLeft size={18} /></button>
+                                    <h3 style={{ margin: 0, textTransform: 'capitalize', fontSize: '1.1rem' }}>
                                         {currentDate.toLocaleString('es-ES', { month: 'long', year: 'numeric' })}
                                     </h3>
-                                    <button onClick={() => changeMonth(1)} className="btn-icon"><ChevronRight /></button>
+                                    <button onClick={() => changeMonth(1)} className="btn-icon small"><ChevronRight size={18} /></button>
                                 </div>
-                                <div style={{ textAlign: 'right' }}>
-                                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700', display: 'block' }}>SUELDO NETO</span>
+                                <div className="salary-info">
+                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '800', display: 'block' }}>SUELDO NETO</span>
                                     {isEditingSalary ? (
-                                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                        <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.25rem' }}>
                                             <input 
                                                 type="number" 
                                                 value={newSalary} 
@@ -262,32 +244,32 @@ export default function GastosPage() {
                                                 style={inputSmallStyle}
                                                 autoFocus
                                             />
-                                            <button onClick={handleSaveSalary} className="btn-primary" style={{ padding: '0.4rem' }}><CheckCircle2 size={18} /></button>
+                                            <button onClick={handleSaveSalary} className="btn-primary" style={{ padding: '0.4rem', borderRadius: 'var(--rounded-sm)' }}><CheckCircle2 size={16} /></button>
                                         </div>
                                     ) : (
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'flex-end' }}>
-                                            <h2 style={{ margin: 0, color: 'var(--text-main)' }}>${salary.toLocaleString()}</h2>
-                                            <button onClick={() => { setIsEditingSalary(true); setNewSalary(salary); }} style={{ color: 'var(--text-muted)' }}><Edit size={16} /></button>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                                            <h2 style={{ margin: 0, color: 'var(--text-main)', fontSize: '1.5rem' }}>${salary.toLocaleString()}</h2>
+                                            <button onClick={() => { setIsEditingSalary(true); setNewSalary(salary); }} style={{ color: 'var(--text-muted)', padding: '4px' }}><Edit size={14} /></button>
                                         </div>
                                     )}
                                 </div>
                             </div>
 
                             {/* Stats Summary */}
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border)', marginTop: '1.25rem' }}>
                                 <div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                                        <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Gastos</span>
-                                        <span style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--error)' }}>{expensePercent.toFixed(1)}%</span>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                                        <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)' }}>Gastos</span>
+                                        <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--error)' }}>{expensePercent.toFixed(0)}%</span>
                                     </div>
                                     <div className="progress-bg">
                                         <div className="progress-fill error" style={{ width: `${expensePercent}%` }}></div>
                                     </div>
                                 </div>
                                 <div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                                        <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Ahorro</span>
-                                        <span style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--accent)' }}>{savingsPercent.toFixed(1)}%</span>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                                        <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)' }}>Ahorro</span>
+                                        <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--accent)' }}>{savingsPercent.toFixed(0)}%</span>
                                     </div>
                                     <div className="progress-bg">
                                         <div className="progress-fill accent" style={{ width: `${savingsPercent}%` }}></div>
@@ -297,23 +279,23 @@ export default function GastosPage() {
                         </div>
 
                         {/* Add Expense Form */}
-                        <div className="card-premium">
-                            <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <PlusCircle className="text-primary" size={20} /> {editingExpense ? 'Editar Gasto' : 'Cargar Gasto'}
+                        <div className="card-premium" style={{ padding: '1.25rem' }}>
+                            <h3 style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.1rem' }}>
+                                <PlusCircle className="text-primary" size={18} /> {editingExpense ? 'Editar Gasto' : 'Cargar Gasto'}
                             </h3>
-                            <form onSubmit={handleAddExpense} style={{ display: 'grid', gridTemplateColumns: '1fr 150px auto', gap: '1rem', alignItems: 'end' }} className="expense-form">
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            <form onSubmit={handleAddExpense} className="expense-form">
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                                     <label style={labelStyle}>Categoría</label>
                                     <input 
                                         type="text" 
                                         value={expenseCategory} 
                                         onChange={(e) => setExpenseCategory(e.target.value)} 
-                                        placeholder="Ej: Comida, Alquiler, Gimnasio..." 
+                                        placeholder="Ej: Comida, Alquiler..." 
                                         style={inputStyle}
                                         required 
                                     />
                                 </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                                     <label style={labelStyle}>Monto ($)</label>
                                     <input 
                                         type="number" 
@@ -324,40 +306,42 @@ export default function GastosPage() {
                                         required 
                                     />
                                 </div>
-                                <button type="submit" className="btn-primary" style={{ padding: '0.85rem 1.5rem' }}>
-                                    {editingExpense ? <CheckCircle2 /> : <Plus />} {editingExpense ? 'Guardar' : 'Agregar'}
-                                </button>
-                                {editingExpense && (
-                                    <button type="button" onClick={() => { setEditingExpense(null); setExpenseCategory(""); setExpenseAmount(""); }} className="btn-outline" style={{ padding: '0.85rem' }}>
-                                        Cancelar
+                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                    <button type="submit" className="btn-primary" style={{ flex: 1, justifyContent: 'center', padding: '0.8rem' }}>
+                                        {editingExpense ? <CheckCircle2 size={18} /> : <Plus size={18} />} {editingExpense ? 'Guardar' : 'Agregar'}
                                     </button>
-                                )}
+                                    {editingExpense && (
+                                        <button type="button" onClick={() => { setEditingExpense(null); setExpenseCategory(""); setExpenseAmount(""); }} className="btn-outline" style={{ padding: '0.8rem' }}>
+                                            <X size={18} />
+                                        </button>
+                                    )}
+                                </div>
                             </form>
                         </div>
 
                         {/* List of Expenses */}
-                        <div className="card-premium">
-                            <h3 style={{ marginBottom: '1.5rem' }}>Detalle de Gastos ({expenses.length})</h3>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        <div className="card-premium" style={{ padding: '1.25rem' }}>
+                            <h3 style={{ marginBottom: '1.25rem', fontSize: '1.1rem' }}>Detalle de Gastos</h3>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                                 {expenses.length === 0 ? (
-                                    <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-                                        <PieChart size={48} style={{ marginBottom: '1rem', opacity: 0.2 }} />
-                                        <p>No hay gastos registrados en este mes.</p>
+                                    <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                                        <PieChart size={40} style={{ marginBottom: '0.75rem', opacity: 0.2 }} />
+                                        <p style={{ fontSize: '0.9rem' }}>No hay gastos este mes.</p>
                                     </div>
                                 ) : (
                                     expenses.map(exp => (
-                                        <div key={exp.id} className="expense-item animate-slide-in">
-                                            <div style={{ flex: 1 }}>
-                                                <h4 style={{ margin: 0, fontSize: '1rem' }}>{exp.category}</h4>
-                                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{new Date(exp.createdAt).toLocaleDateString()}</span>
+                                        <div key={exp.id} className="expense-item animate-slide-in" style={{ padding: '0.75rem' }}>
+                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                <h4 style={{ margin: 0, fontSize: '0.95rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{exp.category}</h4>
+                                                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{new Date(exp.createdAt).toLocaleDateString()}</span>
                                             </div>
-                                            <div style={{ textAlign: 'right', marginRight: '1rem' }}>
-                                                <h4 style={{ margin: 0, color: 'var(--text-main)' }}>${exp.amount.toLocaleString()}</h4>
-                                                <span style={{ fontSize: '0.75rem', color: 'var(--error)', fontWeight: '700' }}>
-                                                    {salary > 0 ? ((exp.amount / salary) * 100).toFixed(1) : 0}%
+                                            <div style={{ textAlign: 'right', marginRight: '0.75rem' }}>
+                                                <h4 style={{ margin: 0, fontSize: '0.95rem' }}>${exp.amount.toLocaleString()}</h4>
+                                                <span style={{ fontSize: '0.65rem', color: 'var(--error)', fontWeight: '800' }}>
+                                                    {salary > 0 ? ((exp.amount / salary) * 100).toFixed(0) : 0}%
                                                 </span>
                                             </div>
-                                            <div style={{ display: 'flex', gap: '0.25rem' }}>
+                                            <div style={{ display: 'flex', gap: '0.2rem' }}>
                                                 <button onClick={() => startEditExpense(exp)} className="btn-icon small"><Edit size={14} /></button>
                                                 <button onClick={() => handleDeleteExpense(exp.id)} className="btn-icon small text-error"><Trash2 size={14} /></button>
                                             </div>
@@ -369,34 +353,32 @@ export default function GastosPage() {
                     </div>
 
                     {/* Right Column: Widgets */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                        <div className="card-premium" style={{ background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)', color: 'white', border: 'none' }}>
-                            <DollarSign size={32} style={{ marginBottom: '1rem', opacity: 0.8 }} />
-                            <span style={{ fontSize: '0.85rem', opacity: 0.8, fontWeight: '700' }}>DISPONIBLE PARA AHORRO</span>
-                            <h2 style={{ fontSize: '2.5rem', margin: '0.5rem 0', fontWeight: '800' }}>${savings.toLocaleString()}</h2>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: '700' }}>
-                                <TrendingUp size={16} /> {savingsPercent.toFixed(1)}% del sueldo
+                    <div className="widgets-column">
+                        <div className="card-premium" style={{ background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)', color: 'white', border: 'none', padding: '1.5rem' }}>
+                            <DollarSign size={24} style={{ marginBottom: '0.75rem', opacity: 0.8 }} />
+                            <span style={{ fontSize: '0.75rem', opacity: 0.8, fontWeight: '800', textTransform: 'uppercase' }}>DISPONIBLE</span>
+                            <h2 style={{ fontSize: '2rem', margin: '0.25rem 0', fontWeight: '900' }}>${savings.toLocaleString()}</h2>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', fontWeight: '700' }}>
+                                <TrendingUp size={14} /> {savingsPercent.toFixed(0)}% del sueldo
                             </div>
                         </div>
 
                         {/* Category Distribution Chart */}
                         {expenses.length > 0 && (
-                            <div className="card-premium animate-fade-in">
-                                <h4 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <PieChart size={18} className="text-primary" /> Distribución
+                            <div className="card-premium animate-fade-in" style={{ padding: '1.25rem' }}>
+                                <h4 style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1rem' }}>
+                                    <PieChart size={16} className="text-primary" /> Distribución
                                 </h4>
-                                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
-                                    <svg width="160" height="160" viewBox="0 0 42 42" style={{ transform: 'rotate(-90deg)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.25rem' }}>
+                                    <svg width="140" height="140" viewBox="0 0 42 42" style={{ transform: 'rotate(-90deg)' }}>
                                         <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="var(--bg-subtle)" strokeWidth="4"></circle>
-                                        {/* Simplified SVG Chart Logic: showing largest category or generic segment if many */}
                                         {(() => {
                                             const total = expenses.reduce((s, e) => s + e.amount, 0);
                                             let offset = 0;
                                             const colors = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
-                                            
-                                            // Group by category for chart
                                             const grouped = expenses.reduce((acc, exp) => {
-                                                acc[exp.category] = (acc[acc] || 0) + exp.amount;
+                                                const cat = exp.category.toLowerCase().trim();
+                                                acc[cat] = (acc[cat] || 0) + exp.amount;
                                                 return acc;
                                             }, {});
 
@@ -420,81 +402,65 @@ export default function GastosPage() {
                                         })()}
                                     </svg>
                                 </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                                     {Object.entries(expenses.reduce((acc, exp) => {
-                                        acc[exp.category] = (acc[exp.category] || 0) + exp.amount;
+                                        const cat = exp.category.toLowerCase().trim();
+                                        acc[cat] = (acc[cat] || 0) + exp.amount;
                                         return acc;
-                                    }, {})).slice(0, 4).map(([cat, amt], i) => (
-                                        <div key={cat} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: ['#2563eb', '#10b981', '#f59e0b', '#ef4444'][i % 4] }}></div>
-                                                <span style={{ fontWeight: '600', color: 'var(--text-muted)' }}>{cat}</span>
+                                    }, {})).sort((a,b) => b[1] - a[1]).slice(0, 4).map(([cat, amt], i) => (
+                                        <div key={cat} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', minWidth: 0 }}>
+                                                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: ['#2563eb', '#10b981', '#f59e0b', '#ef4444'][i % 4], flexShrink: 0 }}></div>
+                                                <span style={{ fontWeight: '600', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat}</span>
                                             </div>
-                                            <span style={{ fontWeight: '800' }}>${amt.toLocaleString()}</span>
+                                            <span style={{ fontWeight: '800', flexShrink: 0 }}>${amt.toLocaleString()}</span>
                                         </div>
                                     ))}
                                 </div>
                             </div>
                         )}
-
-                        <div className="card-premium" style={{ background: 'var(--bg-subtle)', border: '1px dashed var(--border)' }}>
-                            <h4 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <CheckCircle2 size={18} className="text-accent" /> Estado
-                            </h4>
-                            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.6' }}>
-                                {savingsPercent > 25 ? 
-                                    "¡Nivel Maestro! Tu ahorro es superior al promedio. Estás construyendo un fondo sólido." : 
-                                    savingsPercent > 10 ? 
-                                    "Buen camino. Intentá automatizar una parte de ese ahorro a principios de mes." :
-                                    "Momento de revisar prioridades. Buscá gastos que puedas optimizar para llegar al 10% de ahorro."
-                                }
-                            </p>
-                        </div>
                     </div>
                 </div>
             ) : (
                 /* Annual View */
-                <div className="card-premium animate-fade-in" style={{ padding: '2rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
-                        <div>
-                            <h2 style={{ margin: 0, fontSize: '1.75rem' }}>Dashboard Anual {yearStr}</h2>
-                            <p style={{ color: 'var(--text-muted)', margin: 0 }}>Análisis de rendimiento por mes.</p>
-                        </div>
-                        <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-subtle)', padding: '0.5rem', borderRadius: 'var(--rounded-md)' }}>
-                             <button onClick={() => setCurrentDate(new Date(currentDate.setFullYear(currentDate.getFullYear() - 1)))} className="btn-icon small"><ChevronLeft size={18} /></button>
-                             <span style={{ fontWeight: '800', fontSize: '1.1rem', padding: '0 1rem', display: 'flex', alignItems: 'center' }}>{yearStr}</span>
-                             <button onClick={() => setCurrentDate(new Date(currentDate.setFullYear(currentDate.getFullYear() + 1)))} className="btn-icon small"><ChevronRight size={18} /></button>
+                <div className="card-premium animate-fade-in" style={{ padding: '1rem' }}>
+                    <div className="annual-header">
+                        <h2 style={{ margin: 0, fontSize: '1.25rem' }}>Resumen {yearStr}</h2>
+                        <div className="year-selector">
+                             <button onClick={() => setCurrentDate(new Date(currentDate.setFullYear(currentDate.getFullYear() - 1)))} className="btn-icon small"><ChevronLeft size={16} /></button>
+                             <span style={{ fontWeight: '900', fontSize: '1rem' }}>{yearStr}</span>
+                             <button onClick={() => setCurrentDate(new Date(currentDate.setFullYear(currentDate.getFullYear() + 1)))} className="btn-icon small"><ChevronRight size={16} /></button>
                         </div>
                     </div>
 
-                    <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 0.75rem' }}>
+                    <div style={{ overflowX: 'auto', margin: '0 -0.5rem', padding: '0 0.5rem' }}>
+                        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 0.5rem', minWidth: '500px' }}>
                             <thead>
                                 <tr style={{ textAlign: 'left' }}>
                                     <th style={thStyle}>Mes</th>
-                                    <th style={thStyle}>Ingreso</th>
-                                    <th style={thStyle}>Egresos</th>
+                                    <th style={thStyle}>Sueldo</th>
+                                    <th style={thStyle}>Gastos</th>
                                     <th style={thStyle}>Saldo</th>
-                                    <th style={thStyle}>Desempeño</th>
+                                    <th style={thStyle}>Ahorro</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {annualData.map(m => (
                                     <tr key={m.month} className="table-row-hover" style={{ background: m.salary > 0 ? 'var(--bg-subtle)' : 'transparent', opacity: m.salary > 0 ? 1 : 0.4 }}>
-                                        <td style={{ ...tdStyle, borderRadius: 'var(--rounded-md) 0 0 var(--rounded-md)', fontWeight: '800', textTransform: 'capitalize' }}>
-                                            {m.monthName}
+                                        <td style={{ ...tdSmallStyle, borderRadius: 'var(--rounded-md) 0 0 var(--rounded-md)', fontWeight: '800', textTransform: 'capitalize' }}>
+                                            {m.monthName.slice(0, 3)}.
                                         </td>
-                                        <td style={tdStyle}>${m.salary.toLocaleString()}</td>
-                                        <td style={{ ...tdStyle, color: 'var(--error)', fontWeight: '600' }}>-${m.expenses.toLocaleString()}</td>
-                                        <td style={{ ...tdStyle, color: m.savings >= 0 ? 'var(--accent)' : 'var(--error)', fontWeight: '800' }}>
-                                            {m.savings >= 0 ? '+' : ''}${m.savings.toLocaleString()}
+                                        <td style={tdSmallStyle}>${m.salary.toLocaleString()}</td>
+                                        <td style={{ ...tdSmallStyle, color: 'var(--error)' }}>-${m.expenses.toLocaleString()}</td>
+                                        <td style={{ ...tdSmallStyle, color: m.savings >= 0 ? 'var(--accent)' : 'var(--error)', fontWeight: '800' }}>
+                                            ${Math.abs(m.savings).toLocaleString()}
                                         </td>
-                                        <td style={{ ...tdStyle, borderRadius: '0 var(--rounded-md) var(--rounded-md) 0' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                                <div style={{ flex: 1, height: '10px', background: 'rgba(0,0,0,0.05)', borderRadius: '5px', overflow: 'hidden', minWidth: '80px' }}>
-                                                    <div style={{ height: '100%', background: m.savingsPercent > 20 ? 'var(--accent)' : 'var(--primary)', width: `${m.savingsPercent}%`, transition: 'width 1s ease' }}></div>
+                                        <td style={{ ...tdSmallStyle, borderRadius: '0 var(--rounded-md) var(--rounded-md) 0' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                                <div style={{ flex: 1, height: '6px', background: 'rgba(0,0,0,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
+                                                    <div style={{ height: '100%', background: m.savingsPercent > 20 ? 'var(--accent)' : 'var(--primary)', width: `${m.savingsPercent}%` }}></div>
                                                 </div>
-                                                <span style={{ fontWeight: '800', fontSize: '0.85rem' }}>{m.savingsPercent.toFixed(0)}%</span>
+                                                <span style={{ fontWeight: '900', fontSize: '0.75rem' }}>{m.savingsPercent.toFixed(0)}%</span>
                                             </div>
                                         </td>
                                     </tr>
@@ -518,10 +484,85 @@ export default function GastosPage() {
                     transition: all 0.2s ease;
                 }
                 .btn-icon:hover { background: white; border-color: var(--primary); color: var(--primary); }
-                .btn-icon.small { width: 30px; height: 30px; }
-                .text-error { color: var(--error); }
+                .btn-icon.small { width: 32px; height: 32px; }
                 
-                .progress-bg { height: 10px; background: var(--border); borderRadius: 5px; overflow: hidden; }
+                .view-toggle-container {
+                    display: flex; 
+                    background: var(--bg-subtle); 
+                    padding: 0.3rem; 
+                    border-radius: var(--rounded-md); 
+                    border: 1px solid var(--border);
+                }
+                .toggle-btn {
+                    padding: 0.5rem 1rem; 
+                    border-radius: var(--rounded-sm); 
+                    font-size: 0.85rem; 
+                    font-weight: 800;
+                    border: none;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.4rem;
+                    background: transparent;
+                    color: var(--text-muted);
+                    transition: all 0.2s ease;
+                }
+                .toggle-btn.active {
+                    background: white;
+                    color: var(--primary);
+                    box-shadow: var(--shadow-sm);
+                }
+
+                .salary-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 1rem;
+                }
+                .month-nav {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                }
+                .salary-info {
+                    text-align: right;
+                }
+
+                .expense-form {
+                    display: grid;
+                    grid-template-columns: 1fr 120px auto;
+                    gap: 1rem;
+                    align-items: end;
+                }
+
+                .responsive-layout {
+                    display: grid;
+                    grid-template-columns: 1fr 320px;
+                    gap: 1.5rem;
+                }
+
+                .widgets-column {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 1.5rem;
+                }
+
+                .annual-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 1.5rem;
+                }
+                .year-selector {
+                    display: flex;
+                    gap: 0.5rem;
+                    background: var(--bg-subtle);
+                    padding: 0.3rem;
+                    border-radius: var(--rounded-md);
+                    align-items: center;
+                }
+
+                .progress-bg { height: 8px; background: var(--border); borderRadius: 4px; overflow: hidden; }
                 .progress-fill { height: 100%; transition: width 0.5s ease; }
                 .progress-fill.error { background: var(--error); }
                 .progress-fill.accent { background: var(--accent); }
@@ -529,7 +570,6 @@ export default function GastosPage() {
                 .expense-item {
                     display: flex;
                     align-items: center;
-                    padding: 1rem;
                     background: var(--bg-subtle);
                     border-radius: var(--rounded-md);
                     border: 1px solid transparent;
@@ -540,6 +580,15 @@ export default function GastosPage() {
                 @media (max-width: 900px) {
                     .responsive-layout { grid-template-columns: 1fr !important; }
                     .expense-form { grid-template-columns: 1fr !important; }
+                    .salary-header { flex-direction: column; align-items: flex-start; gap: 1.5rem; }
+                    .salary-info { text-align: left; width: 100%; }
+                    .salary-info div { justify-content: flex-start !important; }
+                    .title-responsive { font-size: 1.75rem !important; }
+                }
+
+                @media (max-width: 600px) {
+                    .view-toggle-container { width: 100%; }
+                    .toggle-btn { flex: 1; justify-content: center; }
                 }
 
                 .skeleton {
@@ -558,7 +607,7 @@ export default function GastosPage() {
 
 const inputStyle = { 
     width: '100%', 
-    padding: '0.85rem', 
+    padding: '0.75rem', 
     borderRadius: 'var(--rounded-md)', 
     border: '1px solid var(--border)', 
     outline: 'none', 
@@ -566,13 +615,15 @@ const inputStyle = {
     fontSize: '0.95rem'
 };
 const inputSmallStyle = { 
-    width: '120px', 
+    width: '100%', 
+    maxWidth: '120px',
     padding: '0.4rem 0.75rem', 
     borderRadius: 'var(--rounded-sm)', 
     border: '2px solid var(--primary)', 
     outline: 'none', 
-    fontWeight: '700'
+    fontWeight: '800'
 };
-const labelStyle = { fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase' };
-const thStyle = { padding: '1.25rem 1rem', fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' };
-const tdStyle = { padding: '1.25rem 1rem', fontSize: '0.95rem' };
+const labelStyle = { fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase' };
+const thStyle = { padding: '0.75rem 0.5rem', fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' };
+const tdSmallStyle = { padding: '0.75rem 0.5rem', fontSize: '0.85rem' };
+
