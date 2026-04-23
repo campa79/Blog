@@ -33,7 +33,8 @@ import {
     DollarSign,
     PlusCircle,
     ArrowRightCircle,
-    CheckCircle2
+    CheckCircle2,
+    X
 } from "lucide-react";
 
 export default function GastosPage() {
@@ -384,6 +385,7 @@ export default function GastosPage() {
                                         <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="var(--bg-subtle)" strokeWidth="4"></circle>
                                         {(() => {
                                             const total = expenses.reduce((s, e) => s + e.amount, 0);
+                                            if (total === 0) return null;
                                             let offset = 0;
                                             const colors = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
                                             const grouped = expenses.reduce((acc, exp) => {
