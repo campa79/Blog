@@ -1,4 +1,4 @@
-"use client";
+"use client"; // v2.1 deployment fix
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
