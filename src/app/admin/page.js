@@ -259,7 +259,7 @@ export default function AdminPage() {
       {/* Header */}
       <div style={{ marginBottom: "3rem", display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-            <h1 style={{ fontSize: "2.25rem", color: "var(--text-main)" }}>Panel Admin</h1>
+            <h1 style={{ fontSize: "2.25rem", color: "var(--text-main)" }}>Panel Admin (v2)</h1>
             <p style={{ color: "var(--text-muted)", margin: 0 }}>Cargá productos con múltiples fotos.</p>
         </div>
         <div style={{ background: 'var(--primary-light)', padding: '0.5rem 1rem', borderRadius: 'var(--rounded-md)', color: 'var(--primary)', fontWeight: '700', fontSize: '0.85rem' }}>
