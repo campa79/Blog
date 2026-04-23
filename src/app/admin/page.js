@@ -18,7 +18,9 @@ import {
     BarChart3,
     FileText,
     Calendar,
-    Mail
+    Mail,
+    UploadCloud,
+    Image as ImageIcon
 } from "lucide-react";
 
 export default function AdminPage() {
