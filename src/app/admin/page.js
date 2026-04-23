@@ -14,10 +14,11 @@ import {
     X, 
     Save, 
     CheckCircle, 
-    UserPlus,
-    Lock,
-    Image as ImageIcon,
-    UploadCloud
+    Activity,
+    BarChart3,
+    FileText,
+    Calendar,
+    Mail
 } from "lucide-react";
 
 export default function AdminPage() {
@@ -41,6 +42,8 @@ export default function AdminPage() {
   const [adminEmails, setAdminEmails] = useState([]);
   const [newAdmin, setNewAdmin] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [registeredUsers, setRegisteredUsers] = useState([]);
+  const [totalPosts, setTotalPosts] = useState(0);
 
   // UI state
   const [activeTab, setActiveTab] = useState("products");
@@ -57,37 +60,31 @@ export default function AdminPage() {
     // Superadmin maestro
     if (email === "alberto.campagna@bue.edu.ar") {
       setIsAdmin(true);
-      fetchProducts();
-      fetchAdmins();
+      fetchAllData();
       return;
     }
 
     try {
-      // Intento búsqueda directa por ID (email)
       const adminRef = doc(db, "admins", email);
       const adminSnap = await getDoc(adminRef);
 
       if (adminSnap.exists()) {
         setIsAdmin(true);
-        fetchProducts();
-        fetchAdmins();
+        fetchAllData();
       } else {
-        // Fallback: búsqueda por campo email (para admins viejos)
-        const snap = await getDocs(collection(db, "admins"));
-        const listed = snap.docs.map((d) => d.data().email?.toLowerCase().trim());
-        
-        if (listed.includes(email)) {
-          setIsAdmin(true);
-          fetchProducts();
-          fetchAdmins();
-        } else {
-          router.push("/");
-        }
+        router.push("/");
       }
     } catch (error) {
       console.error("Error verificando admin:", error);
       router.push("/");
     }
+  };
+
+  const fetchAllData = () => {
+    fetchProducts();
+    fetchAdmins();
+    fetchUsers();
+    fetchStats();
   };
 
   const fetchAdmins = async () => {
@@ -98,6 +95,16 @@ export default function AdminPage() {
   const fetchProducts = async () => {
     const snap = await getDocs(collection(db, "products"));
     setProducts(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+  };
+
+  const fetchUsers = async () => {
+    const snap = await getDocs(collection(db, "users"));
+    setRegisteredUsers(snap.docs.map(d => d.data()));
+  };
+
+  const fetchStats = async () => {
+    const postSnap = await getDocs(collection(db, "posts"));
+    setTotalPosts(postSnap.size);
   };
 
   const startEdit = (product) => {
@@ -280,6 +287,9 @@ export default function AdminPage() {
             <button onClick={() => setActiveTab('admins')} style={{ padding: '0.5rem 1rem', color: activeTab === 'admins' ? 'var(--primary)' : 'var(--text-muted)', borderBottom: activeTab === 'admins' ? '2px solid var(--primary)' : '2px solid transparent', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Users size={20} /> Administradores
             </button>
+            <button onClick={() => setActiveTab('stats')} style={{ padding: '0.5rem 1rem', color: activeTab === 'stats' ? 'var(--primary)' : 'var(--text-muted)', borderBottom: activeTab === 'stats' ? '2px solid var(--primary)' : '2px solid transparent', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <BarChart3 size={20} /> Estadísticas
+            </button>
         </div>
 
         {activeTab === "products" && (
@@ -367,6 +377,81 @@ export default function AdminPage() {
                         <button onClick={() => handleRemoveAdmin(adm.id)} style={{ color: 'var(--error)' }}><Trash2 size={16} /></button>
                     </div>
                 ))}
+            </div>
+        )}
+
+        {activeTab === "stats" && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                {/* Metrics Grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
+                    <div className="card-premium" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                        <div style={{ background: 'var(--primary-light)', padding: '1rem', borderRadius: 'var(--rounded-lg)', color: 'var(--primary)' }}>
+                            <Users size={32} />
+                        </div>
+                        <div>
+                            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '700' }}>USUARIOS</span>
+                            <h2 style={{ margin: 0, fontSize: '2rem' }}>{registeredUsers.length}</h2>
+                        </div>
+                    </div>
+                    <div className="card-premium" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                        <div style={{ background: 'var(--accent-light)', padding: '1rem', borderRadius: 'var(--rounded-lg)', color: 'var(--accent)' }}>
+                            <FileText size={32} />
+                        </div>
+                        <div>
+                            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '700' }}>POSTS</span>
+                            <h2 style={{ margin: 0, fontSize: '2rem' }}>{totalPosts}</h2>
+                        </div>
+                    </div>
+                    <div className="card-premium" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                        <div style={{ background: 'var(--bg-subtle)', padding: '1rem', borderRadius: 'var(--rounded-lg)', color: 'var(--text-main)' }}>
+                            <Package size={32} />
+                        </div>
+                        <div>
+                            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '700' }}>PRODUCTOS</span>
+                            <h2 style={{ margin: 0, fontSize: '2rem' }}>{products.length}</h2>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Users Table */}
+                <div className="card-premium">
+                    <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <Activity className="text-primary" /> Usuarios Registrados
+                    </h3>
+                    <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                            <thead>
+                                <tr style={{ borderBottom: '2px solid var(--border)' }}>
+                                    <th style={{ padding: '1rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>USUARIO</th>
+                                    <th style={{ padding: '1rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>EMAIL</th>
+                                    <th style={{ padding: '1rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>ÚLTIMO ACCESO</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {registeredUsers.sort((a,b) => new Date(b.lastLogin) - new Date(a.lastLogin)).map((u, i) => (
+                                    <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
+                                        <td style={{ padding: '1rem' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                                <img src={u.photoURL} alt="" style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--bg-subtle)' }} />
+                                                <span style={{ fontWeight: '600' }}>{u.displayName || 'Sin nombre'}</span>
+                                            </div>
+                                        </td>
+                                        <td style={{ padding: '1rem', fontSize: '0.9rem' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <Mail size={14} className="text-muted" /> {u.email}
+                                            </div>
+                                        </td>
+                                        <td style={{ padding: '1rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <Calendar size={14} /> {new Date(u.lastLogin).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         )}
       </div>
