@@ -135,25 +135,35 @@ export default function GastosPage() {
         e.preventDefault();
         if (!expenseCategory || !expenseAmount) return;
 
-        const itemsRef = collection(db, "user_gastos", user.uid, "mensual", monthId, "items");
-        
-        if (editingExpense) {
-            await updateDoc(doc(itemsRef, editingExpense.id), {
-                category: expenseCategory,
-                amount: Number(expenseAmount),
-                updatedAt: new Date().toISOString()
-            });
-            setEditingExpense(null);
-        } else {
-            await addDoc(itemsRef, {
-                category: expenseCategory,
-                amount: Number(expenseAmount),
-                createdAt: new Date().toISOString()
-            });
-        }
+        setLoading(true);
+        try {
+            const itemsRef = collection(db, "user_gastos", user.uid, "mensual", monthId, "items");
+            
+            if (editingExpense) {
+                // Usamos la ruta completa para mayor seguridad
+                const docRef = doc(db, "user_gastos", user.uid, "mensual", monthId, "items", editingExpense.id);
+                await updateDoc(docRef, {
+                    category: expenseCategory,
+                    amount: Number(expenseAmount),
+                    updatedAt: new Date().toISOString()
+                });
+                setEditingExpense(null);
+            } else {
+                await addDoc(itemsRef, {
+                    category: expenseCategory,
+                    amount: Number(expenseAmount),
+                    createdAt: new Date().toISOString()
+                });
+            }
 
-        setExpenseCategory("");
-        setExpenseAmount("");
+            setExpenseCategory("");
+            setExpenseAmount("");
+        } catch (error) {
+            console.error("Error al guardar gasto:", error);
+            alert("Error al guardar: " + error.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleDeleteExpense = async (id) => {
