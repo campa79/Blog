@@ -1,4 +1,4 @@
-"use client"; // v2.1 deployment fix
+"use client"; // v2.2 forced sync
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
