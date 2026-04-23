@@ -267,95 +267,111 @@ export default function AdminPage() {
     <div className="container" style={{ paddingBottom: '5rem' }}>
 
       {/* Header */}
-      <div style={{ marginBottom: "3rem", display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem' }}>
+      <div style={{ marginBottom: "2rem", display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginTop: '1rem' }}>
         <div>
-            <h1 style={{ fontSize: "2.25rem", color: "var(--text-main)" }}>Panel Admin (v2)</h1>
-            <p style={{ color: "var(--text-muted)", margin: 0 }}>Cargá productos con múltiples fotos.</p>
+            <h1 className="admin-title" style={{ color: "var(--text-main)", margin: 0 }}>Panel Admin (v2)</h1>
+            <p style={{ color: "var(--text-muted)", margin: '0.25rem 0 0 0', fontSize: '0.9rem' }}>Gestioná tu tienda y estadísticas.</p>
         </div>
-        <div style={{ background: 'var(--primary-light)', padding: '0.5rem 1rem', borderRadius: 'var(--rounded-md)', color: 'var(--primary)', fontWeight: '700', fontSize: '0.85rem' }}>
+        <div style={{ background: 'var(--primary-light)', padding: '0.4rem 0.75rem', borderRadius: 'var(--rounded-md)', color: 'var(--primary)', fontWeight: '700', fontSize: '0.75rem' }}>
             {user.email}
         </div>
       </div>
 
       {/* Success toast */}
       {successMsg && (
-        <div style={{
-          position: "fixed", bottom: "24px", right: "24px", zIndex: 3000,
-          background: "white", color: "var(--text-main)", padding: "1rem 1.5rem",
-          borderRadius: "var(--rounded-lg)", boxShadow: "var(--shadow-lg)",
-          display: "flex", alignItems: "center", gap: "0.75rem", borderLeft: "4px solid var(--accent)"
-        }}>
-          <CheckCircle color="var(--accent)" />
-          {successMsg}
+        <div className="toast-admin">
+          <CheckCircle size={20} color="var(--accent)" />
+          <span>{successMsg}</span>
         </div>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         
-        <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
-            <button onClick={() => setActiveTab('products')} style={{ padding: '0.5rem 1rem', color: activeTab === 'products' ? 'var(--primary)' : 'var(--text-muted)', borderBottom: activeTab === 'products' ? '2px solid var(--primary)' : '2px solid transparent', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Package size={20} /> Productos
+        {/* Tabs Navigation */}
+        <div className="admin-tabs">
+            <button onClick={() => setActiveTab('products')} className={`admin-tab-btn ${activeTab === 'products' ? 'active' : ''}`}>
+                <Package size={18} /> Productos
             </button>
-            <button onClick={() => setActiveTab('admins')} style={{ padding: '0.5rem 1rem', color: activeTab === 'admins' ? 'var(--primary)' : 'var(--text-muted)', borderBottom: activeTab === 'admins' ? '2px solid var(--primary)' : '2px solid transparent', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Users size={20} /> Administradores
+            <button onClick={() => setActiveTab('admins')} className={`admin-tab-btn ${activeTab === 'admins' ? 'active' : ''}`}>
+                <Users size={18} /> Admins
             </button>
-            <button onClick={() => setActiveTab('stats')} style={{ padding: '0.5rem 1rem', color: activeTab === 'stats' ? 'var(--primary)' : 'var(--text-muted)', borderBottom: activeTab === 'stats' ? '2px solid var(--primary)' : '2px solid transparent', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <BarChart3 size={20} /> Estadísticas
+            <button onClick={() => setActiveTab('stats')} className={`admin-tab-btn ${activeTab === 'stats' ? 'active' : ''}`}>
+                <BarChart3 size={18} /> Stats
             </button>
         </div>
 
         {activeTab === "products" && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 400px)', gap: '2rem', alignItems: 'start' }} className="admin-responsive-layout">
+            <div className="admin-responsive-layout">
                 
                 {/* Lista */}
-                <div style={{ order: 2 }}>
-                    <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Inventario ({products.length})</h2>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        {products.map(p => (
-                            <div key={p.id} className="card-premium" style={{ display: 'flex', gap: '1rem', alignItems: 'center', padding: '1rem' }}>
-                                <div style={{ width: '64px', height: '64px', background: 'var(--bg-subtle)', borderRadius: 'var(--rounded-md)', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <img src={p.imageUrls?.[0] || p.imageUrl} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                                </div>
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                    <h4 style={{ margin: 0, fontSize: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</h4>
-                                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>${p.price} • Stock: {p.stock} • {p.imageUrls?.length || 1} fotos</p>
-                                </div>
-                                <div style={{ display: 'flex', gap: '0.25rem' }}>
-                                    <button onClick={() => startEdit(p)} style={{ padding: '0.5rem', color: 'var(--primary)' }}><Edit size={18} /></button>
-                                    <button onClick={() => handleDelete(p.id)} style={{ padding: '0.5rem', color: 'var(--error)' }}><Trash2 size={18} /></button>
-                                </div>
+                <div className="admin-list-container">
+                    <h2 style={{ fontSize: '1.1rem', marginBottom: '1.25rem' }}>Inventario ({products.length})</h2>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        {products.length === 0 ? (
+                            <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)', background: 'var(--bg-subtle)', borderRadius: 'var(--rounded-lg)' }}>
+                                <Package size={40} style={{ opacity: 0.2, marginBottom: '1rem' }} />
+                                <p>No hay productos cargados.</p>
                             </div>
-                        ))}
+                        ) : (
+                            products.map(p => (
+                                <div key={p.id} className="card-premium animate-slide-in" style={{ display: 'flex', gap: '1rem', alignItems: 'center', padding: '0.75rem' }}>
+                                    <div style={{ width: '56px', height: '56px', background: 'var(--bg-subtle)', borderRadius: 'var(--rounded-md)', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <img src={p.imageUrls?.[0] || p.imageUrl} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                                    </div>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <h4 style={{ margin: 0, fontSize: '0.95rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</h4>
+                                        <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: 0 }}>${p.price.toLocaleString()} • Stock: {p.stock}</p>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '0.1rem' }}>
+                                        <button onClick={() => startEdit(p)} className="btn-icon-admin"><Edit size={16} /></button>
+                                        <button onClick={() => handleDelete(p.id)} className="btn-icon-admin text-error"><Trash2 size={16} /></button>
+                                    </div>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
 
                 {/* Form */}
-                <div style={{ order: 1 }}>
-                    <div className="card-premium" style={{ background: editingProduct ? 'var(--primary-light)' : 'white', position: 'sticky', top: '100px' }}>
-                        <h3 style={{ marginBottom: '1.5rem' }}>{editingProduct ? 'Editar' : 'Nuevo Producto'}</h3>
+                <div className="admin-form-container">
+                    <div className="card-premium" style={{ background: editingProduct ? 'var(--primary-light)' : 'white' }}>
+                        <h3 style={{ marginBottom: '1.25rem', fontSize: '1.1rem' }}>{editingProduct ? 'Editar Producto' : 'Nuevo Producto'}</h3>
                         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Nombre" style={inputStyle} required />
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                <input type="number" value={price} onChange={e => setPrice(e.target.value)} placeholder="Precio" style={inputStyle} required />
-                                <input type="number" value={stock} onChange={e => setStock(e.target.value)} placeholder="Stock" style={inputStyle} required />
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                <label style={labelStyle}>Nombre del producto</label>
+                                <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Ej: Remera Algodón" style={inputStyle} required />
                             </div>
-                            <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Descripción" style={{ ...inputStyle, height: '80px' }} />
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                    <label style={labelStyle}>Precio ($)</label>
+                                    <input type="number" value={price} onChange={e => setPrice(e.target.value)} placeholder="0" style={inputStyle} required />
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                    <label style={labelStyle}>Stock</label>
+                                    <input type="number" value={stock} onChange={e => setStock(e.target.value)} placeholder="0" style={inputStyle} required />
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                <label style={labelStyle}>Descripción</label>
+                                <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Contale a tus clientes de qué se trata..." style={{ ...inputStyle, height: '100px', resize: 'none' }} />
+                            </div>
                             
-                            <div style={{ border: '2px dashed var(--border)', padding: '1.5rem', borderRadius: 'var(--rounded-md)', textAlign: 'center', background: 'var(--bg-subtle)' }}>
-                                <UploadCloud size={32} color="var(--text-muted)" style={{ marginBottom: '0.5rem' }} />
-                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Subí hasta 5 fotos</p>
-                                <input type="file" multiple accept="image/*" onChange={handleImageChange} style={{ fontSize: '0.85rem' }} />
+                            <div className="upload-zone">
+                                <UploadCloud size={24} color="var(--primary)" style={{ marginBottom: '0.5rem' }} />
+                                <p style={{ fontSize: '0.8rem', fontWeight: '700', margin: '0 0 0.5rem 0' }}>Fotos del producto</p>
+                                <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Máximo 5 imágenes</p>
+                                <input type="file" multiple accept="image/*" onChange={handleImageChange} style={{ fontSize: '0.75rem', width: '100%' }} />
                             </div>
 
                             {imagePreviews.length > 0 && (
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.5rem' }}>
                                     {imagePreviews.map((url, idx) => (
-                                        <div key={idx} style={{ position: 'relative', width: '100%', aspectRatio: '1', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                                        <div key={idx} style={{ position: 'relative', width: '100%', aspectRatio: '1', borderRadius: '6px', overflow: 'hidden', border: '1px solid var(--border)' }}>
                                             <img src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                             <button 
                                                 type="button" 
                                                 onClick={() => removePreview(idx)}
-                                                style={{ position: 'absolute', top: 0, right: 0, background: 'rgba(239, 68, 68, 0.8)', color: 'white', padding: '2px', borderBottomLeftRadius: '4px' }}
+                                                style={{ position: 'absolute', top: 0, right: 0, background: 'rgba(239, 68, 68, 0.9)', color: 'white', padding: '3px', borderBottomLeftRadius: '6px' }}
                                             >
                                                 <X size={12} />
                                             </button>
@@ -364,9 +380,9 @@ export default function AdminPage() {
                                 </div>
                             )}
 
-                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
                                 {editingProduct && <button type="button" onClick={cancelEdit} className="btn-outline" style={{ flex: 1 }}>Cancelar</button>}
-                                <button type="submit" disabled={loading} className="btn-primary" style={{ flex: 2, justifyContent: 'center' }}>
+                                <button type="submit" disabled={loading} className="btn-primary" style={{ flex: 2, justifyContent: 'center', padding: '0.85rem' }}>
                                     {loading ? 'Subiendo...' : editingProduct ? 'Guardar' : 'Publicar'}
                                 </button>
                             </div>
@@ -377,86 +393,82 @@ export default function AdminPage() {
         )}
 
         {activeTab === "admins" && (
-            <div className="card-premium" style={{ maxWidth: '500px', margin: '0 auto' }}>
-                <h3 style={{ marginBottom: '1.5rem' }}>Accesos Admin</h3>
+            <div className="card-premium" style={{ maxWidth: '600px', margin: '0 auto', width: '100%' }}>
+                <h3 style={{ marginBottom: '1.25rem', fontSize: '1.1rem' }}>Gestionar Accesos</h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>Agregá el email de las personas que podrán administrar la tienda.</p>
                 <form onSubmit={handleAddAdmin} style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem' }}>
-                    <input type="email" value={newAdmin} onChange={e => setNewAdmin(e.target.value)} placeholder="Nuevo admin email" style={inputStyle} />
-                    <button type="submit" className="btn-primary"><Plus size={20} /></button>
+                    <input type="email" value={newAdmin} onChange={e => setNewAdmin(e.target.value)} placeholder="email@ejemplo.com" style={inputStyle} />
+                    <button type="submit" className="btn-primary" style={{ padding: '0 1rem' }}><Plus size={20} /></button>
                 </form>
-                {adminEmails.map(adm => (
-                    <div key={adm.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem', borderBottom: '1px solid var(--border)' }}>
-                        <span>{adm.email}</span>
-                        <button onClick={() => handleRemoveAdmin(adm.id)} style={{ color: 'var(--error)' }}><Trash2 size={16} /></button>
-                    </div>
-                ))}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {adminEmails.map(adm => (
+                        <div key={adm.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--bg-subtle)', borderRadius: 'var(--rounded-md)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <Mail size={16} className="text-muted" />
+                                <span style={{ fontSize: '0.9rem', fontWeight: '600' }}>{adm.email}</span>
+                            </div>
+                            <button onClick={() => handleRemoveAdmin(adm.id)} style={{ color: 'var(--error)', padding: '0.5rem' }}><Trash2 size={18} /></button>
+                        </div>
+                    ))}
+                </div>
             </div>
         )}
 
         {activeTab === "stats" && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 {/* Metrics Grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
-                    <div className="card-premium" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                        <div style={{ background: 'var(--primary-light)', padding: '1rem', borderRadius: 'var(--rounded-lg)', color: 'var(--primary)' }}>
-                            <Users size={32} />
-                        </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem' }}>
+                    <div className="card-premium stat-card">
+                        <div className="stat-icon-wrapper primary"><Users size={24} /></div>
                         <div>
-                            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '700' }}>USUARIOS</span>
-                            <h2 style={{ margin: 0, fontSize: '2rem' }}>{registeredUsers.length}</h2>
+                            <span className="stat-label">USUARIOS</span>
+                            <h2 className="stat-value">{registeredUsers.length}</h2>
                         </div>
                     </div>
-                    <div className="card-premium" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                        <div style={{ background: 'var(--accent-light)', padding: '1rem', borderRadius: 'var(--rounded-lg)', color: 'var(--accent)' }}>
-                            <FileText size={32} />
-                        </div>
+                    <div className="card-premium stat-card">
+                        <div className="stat-icon-wrapper accent"><FileText size={24} /></div>
                         <div>
-                            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '700' }}>POSTS</span>
-                            <h2 style={{ margin: 0, fontSize: '2rem' }}>{totalPosts}</h2>
+                            <span className="stat-label">POSTS</span>
+                            <h2 className="stat-value">{totalPosts}</h2>
                         </div>
                     </div>
-                    <div className="card-premium" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                        <div style={{ background: 'var(--bg-subtle)', padding: '1rem', borderRadius: 'var(--rounded-lg)', color: 'var(--text-main)' }}>
-                            <Package size={32} />
-                        </div>
+                    <div className="card-premium stat-card">
+                        <div className="stat-icon-wrapper subtle"><Package size={24} /></div>
                         <div>
-                            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '700' }}>PRODUCTOS</span>
-                            <h2 style={{ margin: 0, fontSize: '2rem' }}>{products.length}</h2>
+                            <span className="stat-label">PRODUCTOS</span>
+                            <h2 className="stat-value">{products.length}</h2>
                         </div>
                     </div>
                 </div>
 
                 {/* Users Table */}
-                <div className="card-premium">
-                    <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <Activity className="text-primary" /> Usuarios Registrados
+                <div className="card-premium" style={{ padding: '1.25rem' }}>
+                    <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1.1rem' }}>
+                        <Activity className="text-primary" /> Auditoría de Accesos
                     </h3>
-                    <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                    <div style={{ overflowX: 'auto', margin: '0 -0.5rem', padding: '0 0.5rem' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '450px' }}>
                             <thead>
                                 <tr style={{ borderBottom: '2px solid var(--border)' }}>
-                                    <th style={{ padding: '1rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>USUARIO</th>
-                                    <th style={{ padding: '1rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>EMAIL</th>
-                                    <th style={{ padding: '1rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>ÚLTIMO ACCESO</th>
+                                    <th style={thSmallStyle}>USUARIO</th>
+                                    <th style={thSmallStyle}>EMAIL</th>
+                                    <th style={thSmallStyle}>ÚLTIMA VEZ</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {registeredUsers.sort((a,b) => new Date(b.lastLogin) - new Date(a.lastLogin)).map((u, i) => (
                                     <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
-                                        <td style={{ padding: '1rem' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                                <img src={u.photoURL} alt="" style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--bg-subtle)' }} />
-                                                <span style={{ fontWeight: '600' }}>{u.displayName || 'Sin nombre'}</span>
+                                        <td style={{ padding: '0.75rem 0' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <img src={u.photoURL} alt="" style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--bg-subtle)' }} />
+                                                <span style={{ fontWeight: '600', fontSize: '0.85rem' }}>{u.displayName || 'Sin nombre'}</span>
                                             </div>
                                         </td>
-                                        <td style={{ padding: '1rem', fontSize: '0.9rem' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                <Mail size={14} className="text-muted" /> {u.email}
-                                            </div>
+                                        <td style={{ padding: '0.75rem 0', fontSize: '0.8rem' }}>
+                                            {u.email}
                                         </td>
-                                        <td style={{ padding: '1rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                <Calendar size={14} /> {new Date(u.lastLogin).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                            </div>
+                                        <td style={{ padding: '0.75rem 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                                            {new Date(u.lastLogin).toLocaleDateString()} {new Date(u.lastLogin).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </td>
                                     </tr>
                                 ))}
@@ -469,14 +481,111 @@ export default function AdminPage() {
       </div>
 
       <style jsx>{`
+          .admin-tabs {
+              display: flex; 
+              gap: 0.5rem; 
+              border-bottom: 1px solid var(--border); 
+              overflow-x: auto;
+              padding-bottom: 0.25rem;
+              scrollbar-width: none;
+          }
+          .admin-tabs::-webkit-scrollbar { display: none; }
+
+          .admin-tab-btn {
+              padding: 0.75rem 1.25rem; 
+              color: var(--text-muted); 
+              background: transparent;
+              border: none;
+              border-bottom: 2px solid transparent; 
+              fontWeight: 700; 
+              display: flex; 
+              align-items: center; 
+              gap: 0.5rem;
+              white-space: nowrap;
+              cursor: pointer;
+              transition: all 0.2s ease;
+              font-size: 0.9rem;
+          }
+          .admin-tab-btn.active {
+              color: var(--primary);
+              border-bottom-color: var(--primary);
+          }
+
+          .admin-responsive-layout {
+              display: grid;
+              grid-template-columns: 1fr 380px;
+              gap: 2rem;
+              align-items: start;
+          }
+
+          .btn-icon-admin {
+              padding: 0.5rem;
+              background: transparent;
+              border: none;
+              cursor: pointer;
+              color: var(--primary);
+              border-radius: 4px;
+          }
+          .btn-icon-admin:hover { background: var(--bg-subtle); }
+          .btn-icon-admin.text-error { color: var(--error); }
+
+          .upload-zone {
+              border: 2px dashed var(--border); 
+              padding: 1.25rem; 
+              border-radius: var(--rounded-md); 
+              text-align: center; 
+              background: var(--bg-subtle);
+              transition: border-color 0.2s ease;
+          }
+          .upload-zone:hover { border-color: var(--primary); }
+
+          .toast-admin {
+              position: fixed; bottom: 24px; right: 24px; z-index: 3000;
+              background: white; color: var(--text-main); padding: 1rem 1.5rem;
+              border-radius: var(--rounded-lg); boxShadow: var(--shadow-lg);
+              display: flex; alignItems: center; gap: 0.75rem; border-left: 4px solid var(--accent);
+          }
+
+          .stat-card { display: flex; alignItems: center; gap: 1rem; padding: 1.25rem; }
+          .stat-icon-wrapper { padding: 0.75rem; borderRadius: var(--rounded-lg); }
+          .stat-icon-wrapper.primary { background: var(--primary-light); color: var(--primary); }
+          .stat-icon-wrapper.accent { background: var(--accent-light); color: var(--accent); }
+          .stat-icon-wrapper.subtle { background: var(--bg-subtle); color: var(--text-main); }
+          .stat-label { fontSize: 0.75rem; color: var(--text-muted); fontWeight: 700; textTransform: uppercase; }
+          .stat-value { margin: 0; fontSize: 1.5rem; fontWeight: 900; }
+
           @media (max-width: 900px) {
-              .admin-responsive-layout { grid-template-columns: 1fr !important; }
-              .admin-responsive-layout > div { position: relative !important; top: 0 !important; }
+              .admin-responsive-layout { grid-template-columns: 1fr !important; gap: 1.5rem; }
+              .admin-form-container { order: 1; }
+              .admin-list-container { order: 2; }
+              .admin-title { font-size: 1.75rem !important; }
+              .toast-admin { left: 24px; right: 24px; bottom: 24px; }
           }
       `}</style>
     </div>
   );
 }
 
-const inputStyle = { width: '100%', padding: '0.75rem', borderRadius: 'var(--rounded-md)', border: '1px solid var(--border)', outline: 'none', fontFamily: 'inherit' };
-const labelStyle = { fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '0.25rem', display: 'block' };
+const inputStyle = { 
+    width: '100%', 
+    padding: '0.75rem', 
+    borderRadius: 'var(--rounded-md)', 
+    border: '1px solid var(--border)', 
+    outline: 'none', 
+    fontFamily: 'inherit',
+    fontSize: '0.9rem'
+};
+const labelStyle = { 
+    fontSize: '0.7rem', 
+    fontWeight: '800', 
+    color: 'var(--text-muted)', 
+    textTransform: 'uppercase', 
+    letterSpacing: '0.05em' 
+};
+const thSmallStyle = { 
+    padding: '1rem 0', 
+    fontSize: '0.7rem', 
+    color: 'var(--text-muted)', 
+    textTransform: 'uppercase', 
+    letterSpacing: '0.05em' 
+};
