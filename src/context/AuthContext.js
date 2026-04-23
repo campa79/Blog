@@ -16,15 +16,20 @@ export function AuthProvider({ children }) {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
       if (user) {
-        // Guardar/Actualizar datos del usuario en Firestore
-        const userRef = doc(db, "users", user.uid);
-        await setDoc(userRef, {
-          uid: user.uid,
-          email: user.email,
-          displayName: user.displayName,
-          photoURL: user.photoURL,
-          lastLogin: new Date().toISOString()
-        }, { merge: true });
+        try {
+          // Guardar/Actualizar datos del usuario en Firestore
+          const userRef = doc(db, "users", user.uid);
+          await setDoc(userRef, {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName,
+            photoURL: user.photoURL,
+            lastLogin: new Date().toISOString()
+          }, { merge: true });
+        } catch (error) {
+          console.error("Error saving user to Firestore:", error);
+          // No bloqueamos el flujo si fallan las reglas de Firestore
+        }
       }
       setLoading(false);
     });

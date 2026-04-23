@@ -75,7 +75,16 @@ export default function AdminPage() {
         setIsAdmin(true);
         fetchAllData();
       } else {
-        router.push("/");
+        // Fallback: búsqueda por campo email en toda la colección
+        const snap = await getDocs(collection(db, "admins"));
+        const listed = snap.docs.map((d) => d.data().email?.toLowerCase().trim());
+        
+        if (listed.includes(email)) {
+          setIsAdmin(true);
+          fetchAllData();
+        } else {
+          router.push("/");
+        }
       }
     } catch (error) {
       console.error("Error verificando admin:", error);
