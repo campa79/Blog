@@ -19,6 +19,7 @@ import {
     FileText,
     Calendar,
     Mail,
+    Lock,
     UploadCloud,
     Image as ImageIcon
 } from "lucide-react";
