@@ -25,6 +25,33 @@
   --rounded-md: 0.75rem;
   --rounded-lg: 1rem;
   --rounded-xl: 1.5rem;
+
+  /* Component specific */
+  --navbar-bg: rgba(255, 255, 255, 0.8);
+  --card-bg: #ffffff;
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.3);
+}
+
+[data-theme='dark'] {
+  --bg: #0f172a; /* Casi negro (Slate 900) */
+  --bg-subtle: #1e293b; /* Slate 800 */
+  --text-main: #f8fafc; /* Slate 50 */
+  --text-muted: #94a3b8; /* Slate 400 */
+  --primary: #3b82f6; /* Blue 500 (un poco más brillante para dark mode) */
+  --primary-dark: #2563eb;
+  --primary-light: rgba(59, 130, 246, 0.2);
+  --border: #334155; /* Slate 700 */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.5);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.5);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.5);
+  --shadow-premium: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+
+  /* Component specific */
+  --navbar-bg: rgba(15, 23, 42, 0.8);
+  --card-bg: #1e293b;
+  --glass-bg: rgba(30, 41, 59, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.1);
 }
 
 * {
@@ -54,6 +81,30 @@ body {
   padding: 0 1.5rem;
 }
 
+.navbar {
+  height: 72px;
+  background: var(--navbar-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  transition: all 0.3s ease;
+}
+
+.nav-link {
+  color: var(--text-main);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: color 0.2s ease;
+}
+
+.nav-link:hover {
+  color: var(--primary);
+}
+
 /* Typography */
 h1, h2, h3, h4 {
   font-family: var(--font-heading);
@@ -68,7 +119,7 @@ h3 { font-size: 1.25rem; }
 
 /* Components */
 .card-premium {
-  background: white;
+  background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: var(--rounded-lg);
   padding: 1.5rem;
@@ -116,7 +167,7 @@ h3 { font-size: 1.25rem; }
 }
 
 .btn-outline:hover {
-  background: white;
+  background: var(--card-bg);
   border-color: var(--text-main);
 }
 
@@ -163,15 +214,15 @@ h3 { font-size: 1.25rem; }
   font-weight: 700;
   padding: 0.25rem 0.5rem;
   border-radius: 9999px;
-  border: 2px solid white;
+  border: 2px solid var(--bg);
 }
 
 /* Glassmorphism Classes */
 .glass {
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--glass-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--glass-border);
 }
 
 /* Hide on Mobile/Desktop */
@@ -313,7 +364,7 @@ h3 { font-size: 1.25rem; }
 }
 
 .table-row-hover:hover {
-  background-color: white !important;
+  background-color: var(--card-bg) !important;
   transform: scale(1.01);
   box-shadow: var(--shadow-sm);
   z-index: 5;

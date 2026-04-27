@@ -62,7 +62,7 @@ export default function BlogPage() {
             ) : user ? (
                 <PostForm />
             ) : (
-                <div className="card-premium" style={{ textAlign: 'center', background: 'white', padding: '3rem 2rem' }}>
+                <div className="card-premium" style={{ textAlign: 'center', background: 'var(--card-bg)', padding: '3rem 2rem' }}>
                     <h3 style={{ marginBottom: '1rem' }}>Unite a la conversación</h3>
                     <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Debes iniciar sesión para poder publicar y participar en el blog comunitario.</p>
                     <button onClick={login} className="btn-primary" style={{ gap: '0.75rem' }}>
@@ -89,7 +89,8 @@ export default function BlogPage() {
                             border: '1px solid var(--border)',
                             fontSize: '1rem',
                             outline: 'none',
-                            background: 'white',
+                            background: 'var(--card-bg)',
+                            color: 'var(--text-main)',
                             boxShadow: 'var(--shadow-sm)'
                         }}
                     />
@@ -101,7 +102,7 @@ export default function BlogPage() {
                         style={{
                             padding: '0.5rem 1.25rem',
                             borderRadius: '999px',
-                            background: filter === 'all' ? 'var(--primary)' : 'white',
+                            background: filter === 'all' ? 'var(--primary)' : 'var(--card-bg)',
                             color: filter === 'all' ? 'white' : 'var(--text-muted)',
                             border: filter === 'all' ? '1px solid var(--primary)' : '1px solid var(--border)',
                             fontSize: '0.85rem',
@@ -116,7 +117,7 @@ export default function BlogPage() {
                         style={{
                             padding: '0.5rem 1.25rem',
                             borderRadius: '999px',
-                            background: filter === 'mine' ? 'var(--primary)' : 'white',
+                            background: filter === 'mine' ? 'var(--primary)' : 'var(--card-bg)',
                             color: filter === 'mine' ? 'white' : 'var(--text-muted)',
                             border: filter === 'mine' ? '1px solid var(--primary)' : '1px solid var(--border)',
                             fontSize: '0.85rem',

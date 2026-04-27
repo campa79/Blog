@@ -111,7 +111,7 @@ export default function PostForm({ existingPost = null, onComplete = () => {} })
           value={content}
           onChange={(e) => setContent(e.target.value)}
           rows={3}
-          style={{ width: '100%', border: 'none', outline: 'none', resize: 'none', fontSize: '1.1rem', marginBottom: '1rem', fontFamily: 'inherit' }}
+          style={{ width: '100%', border: 'none', outline: 'none', resize: 'none', fontSize: '1.1rem', marginBottom: '1rem', fontFamily: 'inherit', background: 'transparent', color: 'var(--text-main)' }}
         />
 
         {previews.length > 0 && (

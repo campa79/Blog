@@ -152,7 +152,7 @@ export default function PostItem({ post }) {
         )}
       </div>
 
-      <div className="markdown-content" style={{ marginBottom: '1.25rem', fontSize: '1.05rem', lineHeight: '1.7', color: '#334155' }}>
+      <div className="markdown-content" style={{ marginBottom: '1.25rem', fontSize: '1.05rem', lineHeight: '1.7', color: 'var(--text-main)' }}>
         <ReactMarkdown>{post.content}</ReactMarkdown>
       </div>
 

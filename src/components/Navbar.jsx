@@ -3,13 +3,15 @@
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
-import { LogIn, LogOut, Menu, X, ShoppingCart, User, LayoutDashboard, Newspaper, ShoppingBag } from "lucide-react";
+import { useTheme } from "@/context/ThemeContext";
+import { LogIn, LogOut, Menu, X, ShoppingCart, User, LayoutDashboard, Newspaper, ShoppingBag, Sun, Moon } from "lucide-react";
 import { useState } from "react";
 import CartSidebar from "./CartSidebar";
 
 export default function Navbar() {
   const { user, login, logout } = useAuth();
   const { cartCount, setIsCartOpen } = useCart();
+  const { theme, toggleTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -36,10 +38,19 @@ export default function Navbar() {
 
           {/* Actions */}
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            {/* Theme Toggle */}
+            <button 
+                onClick={toggleTheme}
+                style={{ padding: '0.5rem', borderRadius: '50%', background: 'var(--bg-subtle)', color: 'var(--text-main)', display: 'flex', border: '1px solid var(--border)' }}
+                aria-label="Toggle Theme"
+            >
+                {theme === 'light' ? <Moon size={22} /> : <Sun size={22} />}
+            </button>
+
             {/* Cart Button */}
             <button 
                 onClick={() => setIsCartOpen(true)}
-                style={{ position: 'relative', padding: '0.5rem', borderRadius: '50%', background: 'var(--bg-subtle)', color: 'var(--text-main)', display: 'flex' }}
+                style={{ position: 'relative', padding: '0.5rem', borderRadius: '50%', background: 'var(--bg-subtle)', color: 'var(--text-main)', display: 'flex', border: '1px solid var(--border)' }}
             >
                 <ShoppingCart size={22} />
                 {cartCount > 0 && (
@@ -49,7 +60,7 @@ export default function Navbar() {
                         fontSize: '0.65rem', fontWeight: '800', 
                         width: '18px', height: '18px', 
                         display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                        borderRadius: '50%', border: '2px solid white'
+                        borderRadius: '50%', border: '2px solid var(--bg)'
                     }}>
                         {cartCount}
                     </span>
@@ -75,7 +86,7 @@ export default function Navbar() {
             )}
 
             {/* Mobile Toggle */}
-            <button className="show-on-mobile" onClick={() => setIsOpen(!isOpen)} style={{ color: 'var(--text-main)' }}>
+            <button className="show-on-mobile" onClick={() => setIsOpen(!isOpen)} style={{ color: 'var(--text-main)', background: 'transparent', border: 'none' }}>
               {isOpen ? <X size={28} /> : <Menu size={28} />}
             </button>
           </div>
@@ -84,8 +95,8 @@ export default function Navbar() {
         {/* Mobile Menu */}
         {isOpen && (
           <div className="mobile-menu animate-fade-in" style={{
-              position: 'absolute', top: 'var(--navbar-height)', left: 0, width: '100%',
-              background: 'white', borderBottom: '1px solid var(--border)', padding: '2rem 1rem',
+              position: 'absolute', top: '72px', left: 0, width: '100%',
+              background: 'var(--bg)', borderBottom: '1px solid var(--border)', padding: '2rem 1rem',
               display: 'flex', flexDirection: 'column', gap: '1.5rem', zIndex: 1000
           }}>
             <Link href="/" className="nav-link" onClick={() => setIsOpen(false)} style={{ fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -105,13 +116,23 @@ export default function Navbar() {
               </>
             )}
             <hr style={{ border: 'none', borderTop: '1px solid var(--border)' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontWeight: '600', color: 'var(--text-main)' }}>Modo {theme === 'light' ? 'Oscuro' : 'Claro'}</span>
+                <button 
+                    onClick={toggleTheme}
+                    style={{ padding: '0.5rem', borderRadius: '50%', background: 'var(--bg-subtle)', color: 'var(--text-main)', display: 'flex', border: '1px solid var(--border)' }}
+                >
+                    {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+                </button>
+            </div>
+            <hr style={{ border: 'none', borderTop: '1px solid var(--border)' }} />
             {user ? (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                        <img src={user.photoURL} alt="Profile" style={{ width: 44, height: 44, borderRadius: '50%' }} />
-                        <span style={{ fontWeight: '700' }}>{user.displayName}</span>
+                        {user.photoURL && <img src={user.photoURL} alt="Profile" style={{ width: 44, height: 44, borderRadius: '50%' }} />}
+                        <span style={{ fontWeight: '700', color: 'var(--text-main)' }}>{user.displayName}</span>
                     </div>
-                    <button onClick={logout} style={{ color: 'var(--error)', fontWeight: '700' }}><LogOut size={20} /></button>
+                    <button onClick={logout} style={{ color: 'var(--error)', fontWeight: '700', background: 'transparent', border: 'none' }}><LogOut size={20} /></button>
                 </div>
             ) : (
                 <button onClick={() => { login(); setIsOpen(false); }} className="btn-primary" style={{ width: '100%', justifyContent: 'center' }}>

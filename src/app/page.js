@@ -98,7 +98,7 @@ function ProductCard({ product, onAdd }) {
       {/* Navegar al detalle pulsando la foto */}
       <div 
         onClick={goToDetail}
-        style={{ width: '100%', height: '260px', background: '#f8fafc', overflow: 'hidden', position: 'relative', cursor: 'zoom-in' }}
+        style={{ width: '100%', height: '260px', background: 'var(--bg-subtle)', overflow: 'hidden', position: 'relative', cursor: 'zoom-in' }}
       >
         <img 
             src={images[currentImg]} 
@@ -119,7 +119,7 @@ function ProductCard({ product, onAdd }) {
             </div>
         )}
         
-        <div style={{ position: 'absolute', bottom: '0.75rem', right: '0.75rem', background: 'white', padding: '4px', borderRadius: '50%', boxShadow: 'var(--shadow-sm)', color: 'var(--primary)', display: 'flex' }}>
+        <div style={{ position: 'absolute', bottom: '0.75rem', right: '0.75rem', background: 'var(--card-bg)', padding: '4px', borderRadius: '50%', boxShadow: 'var(--shadow-sm)', color: 'var(--primary)', display: 'flex' }}>
             <Maximize2 size={14} />
         </div>
       </div>
@@ -164,7 +164,7 @@ function ProductCard({ product, onAdd }) {
 
 const arrowStyle = {
     position: 'absolute', top: '50%', transform: 'translateY(-50%)', left: '0.5rem',
-    background: 'rgba(255,255,255,0.7)', border: 'none', borderRadius: '50%',
+    background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: '50%',
     width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center',
     cursor: 'pointer', zIndex: 10, backdropFilter: 'blur(2px)'
 };

@@ -13,6 +13,7 @@ const geistMono = Geist_Mono({
 
 import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 import Navbar from "@/components/Navbar";
 
 export const metadata = {
@@ -24,14 +25,16 @@ export default function RootLayout({ children }) {
   return (
     <html lang="es">
       <body>
-        <AuthProvider>
-          <CartProvider>
-            <Navbar />
-            <main className="container">
-              {children}
-            </main>
-          </CartProvider>
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <CartProvider>
+              <Navbar />
+              <main className="container">
+                {children}
+              </main>
+            </CartProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
