@@ -34,7 +34,9 @@ import {
     PlusCircle,
     ArrowRightCircle,
     CheckCircle2,
-    X
+    X,
+    Copy,
+    AlertCircle
 } from "lucide-react";
 
 export default function GastosPage() {
@@ -98,11 +100,12 @@ export default function GastosPage() {
         }
     }, [isAnnualView, yearStr, user]);
 
-    const fetchAnnualData = async () => {
+    const fetchAnnualData = async (year) => {
         setLoading(true);
         const months = [];
+        const targetYear = year || yearStr;
         for (let i = 1; i <= 12; i++) {
-            const mId = `${yearStr}-${String(i).padStart(2, '0')}`;
+            const mId = `${targetYear}-${String(i).padStart(2, '0')}`;
             
             // Get Salary
             const mDoc = await getDoc(doc(db, "user_gastos", user.uid, "mensual", mId));
@@ -114,7 +117,7 @@ export default function GastosPage() {
 
             months.push({
                 month: i,
-                monthName: new Date(2024, i - 1).toLocaleString('es-ES', { month: 'long' }),
+                monthName: new Date(Number(targetYear), i - 1).toLocaleString('es-ES', { month: 'long' }),
                 salary: mSalary,
                 expenses: mExpenses,
                 savings: mSalary - mExpenses,
@@ -153,6 +156,7 @@ export default function GastosPage() {
                 await addDoc(itemsRef, {
                     category: expenseCategory,
                     amount: Number(expenseAmount),
+                    paid: false,
                     createdAt: new Date().toISOString()
                 });
             }
@@ -180,6 +184,52 @@ export default function GastosPage() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
+    const handleTogglePaid = async (exp) => {
+        try {
+            const docRef = doc(db, "user_gastos", user.uid, "mensual", monthId, "items", exp.id);
+            await updateDoc(docRef, { paid: !exp.paid });
+        } catch (error) {
+            console.error("Error toggling paid status:", error);
+        }
+    };
+
+    const handleCopyPreviousMonth = async () => {
+        const prevDate = new Date(currentDate);
+        prevDate.setMonth(prevDate.getMonth() - 1);
+        const prevMonthId = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
+        
+        setLoading(true);
+        try {
+            const prevItemsRef = collection(db, "user_gastos", user.uid, "mensual", prevMonthId, "items");
+            const snapshot = await getDocs(prevItemsRef);
+            
+            if (snapshot.empty) {
+                alert("No se encontraron gastos en el mes anterior para copiar.");
+                return;
+            }
+
+            if (!confirm(`¿Deseas copiar ${snapshot.size} gastos del mes anterior?`)) return;
+
+            const currentItemsRef = collection(db, "user_gastos", user.uid, "mensual", monthId, "items");
+            
+            // Sequential add to avoid Firestore issues with many rapid writes
+            for (const d of snapshot.docs) {
+                const data = d.data();
+                await addDoc(currentItemsRef, {
+                    category: data.category,
+                    amount: data.amount,
+                    paid: false,
+                    createdAt: new Date().toISOString()
+                });
+            }
+        } catch (error) {
+            console.error("Error copying expenses:", error);
+            alert("Error al copiar gastos: " + error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const changeMonth = (offset) => {
         const newDate = new Date(currentDate);
         newDate.setMonth(newDate.getMonth() + offset);
@@ -196,6 +246,7 @@ export default function GastosPage() {
 
     const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
     const savings = Math.max(0, salary - totalExpenses);
+    const excess = totalExpenses > salary ? totalExpenses - salary : 0;
     const expensePercent = salary > 0 ? Math.min(100, (totalExpenses / salary) * 100) : 0;
     const savingsPercent = salary > 0 ? Math.max(0, (savings / salary) * 100) : 0;
 
@@ -242,6 +293,14 @@ export default function GastosPage() {
                                         {currentDate.toLocaleString('es-ES', { month: 'long', year: 'numeric' })}
                                     </h3>
                                     <button onClick={() => changeMonth(1)} className="btn-icon small"><ChevronRight size={18} /></button>
+                                    <button 
+                                        onClick={handleCopyPreviousMonth} 
+                                        className="btn-icon small" 
+                                        title="Copiar gastos del mes anterior"
+                                        style={{ marginLeft: '0.5rem', color: 'var(--primary)' }}
+                                    >
+                                        <Copy size={16} />
+                                    </button>
                                 </div>
                                 <div className="salary-info">
                                     <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '800', display: 'block' }}>SUELDO NETO</span>
@@ -333,7 +392,7 @@ export default function GastosPage() {
                         {/* List of Expenses */}
                         <div className="card-premium" style={{ padding: '1.25rem' }}>
                             <h3 style={{ marginBottom: '1.25rem', fontSize: '1.1rem' }}>Detalle de Gastos</h3>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
                                 {expenses.length === 0 ? (
                                     <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
                                         <PieChart size={40} style={{ marginBottom: '0.75rem', opacity: 0.2 }} />
@@ -341,20 +400,34 @@ export default function GastosPage() {
                                     </div>
                                 ) : (
                                     expenses.map(exp => (
-                                        <div key={exp.id} className="expense-item animate-slide-in" style={{ padding: '0.75rem' }}>
-                                            <div style={{ flex: 1, minWidth: 0 }}>
-                                                <h4 style={{ margin: 0, fontSize: '0.95rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{exp.category}</h4>
-                                                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{new Date(exp.createdAt).toLocaleDateString()}</span>
+                                        <div key={exp.id} className="expense-item animate-slide-in" style={{ padding: '0.85rem', flexDirection: 'column', alignItems: 'flex-start', gap: '0.5rem' }}>
+                                            {/* Item Name Row */}
+                                            <div style={{ width: '100%' }}>
+                                                <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: '800', color: 'var(--text-main)', wordBreak: 'break-word' }}>{exp.category}</h4>
                                             </div>
-                                            <div style={{ textAlign: 'right', marginRight: '0.75rem' }}>
-                                                <h4 style={{ margin: 0, fontSize: '0.95rem' }}>${exp.amount.toLocaleString()}</h4>
-                                                <span style={{ fontSize: '0.65rem', color: 'var(--error)', fontWeight: '800' }}>
-                                                    {salary > 0 ? ((exp.amount / salary) * 100).toFixed(0) : 0}%
-                                                </span>
-                                            </div>
-                                            <div style={{ display: 'flex', gap: '0.2rem' }}>
-                                                <button onClick={() => startEditExpense(exp)} className="btn-icon small"><Edit size={14} /></button>
-                                                <button onClick={() => handleDeleteExpense(exp.id)} className="btn-icon small text-error"><Trash2 size={14} /></button>
+                                            
+                                            {/* Item Meta & Actions Row */}
+                                            <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: '0.5rem', marginTop: '0.2rem' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '600' }}>{new Date(exp.createdAt).toLocaleDateString()}</span>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                                        <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '900', color: 'var(--text-main)' }}>${exp.amount.toLocaleString()}</h4>
+                                                        <span style={{ fontSize: '0.65rem', color: 'var(--error)', fontWeight: '800' }}>
+                                                            ({salary > 0 ? ((exp.amount / salary) * 100).toFixed(0) : 0}%)
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
+                                                    <button 
+                                                        onClick={() => handleTogglePaid(exp)} 
+                                                        className={`btn-icon small ${exp.paid ? 'active-success' : ''}`}
+                                                        title={exp.paid ? "Marcar como pendiente" : "Marcar como pagado"}
+                                                    >
+                                                        <CheckCircle2 size={14} color={exp.paid ? 'white' : 'var(--text-muted)'} />
+                                                    </button>
+                                                    <button onClick={() => startEditExpense(exp)} className="btn-icon small"><Edit size={14} /></button>
+                                                    <button onClick={() => handleDeleteExpense(exp.id)} className="btn-icon small text-error"><Trash2 size={14} /></button>
+                                                </div>
                                             </div>
                                         </div>
                                     ))
@@ -365,12 +438,27 @@ export default function GastosPage() {
 
                     {/* Right Column: Widgets */}
                     <div className="widgets-column">
-                        <div className="card-premium" style={{ background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)', color: 'white', border: 'none', padding: '1.5rem' }}>
-                            <DollarSign size={24} style={{ marginBottom: '0.75rem', opacity: 0.8 }} />
-                            <span style={{ fontSize: '0.75rem', opacity: 0.8, fontWeight: '800', textTransform: 'uppercase' }}>DISPONIBLE</span>
-                            <h2 style={{ fontSize: '2rem', margin: '0.25rem 0', fontWeight: '900' }}>${savings.toLocaleString()}</h2>
+                        <div className="card-premium" style={{ 
+                            background: excess > 0 
+                                ? 'linear-gradient(135deg, var(--error) 0%, #b91c1c 100%)' 
+                                : 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)', 
+                            color: 'white', 
+                            border: 'none', 
+                            padding: '1.5rem' 
+                        }}>
+                            {excess > 0 ? <AlertCircle size={24} style={{ marginBottom: '0.75rem', opacity: 0.8 }} /> : <DollarSign size={24} style={{ marginBottom: '0.75rem', opacity: 0.8 }} />}
+                            <span style={{ fontSize: '0.75rem', opacity: 0.8, fontWeight: '800', textTransform: 'uppercase' }}>
+                                {excess > 0 ? 'GASTANDO DE MÁS' : 'DISPONIBLE'}
+                            </span>
+                            <h2 style={{ fontSize: '2rem', margin: '0.25rem 0', fontWeight: '900' }}>
+                                ${excess > 0 ? excess.toLocaleString() : savings.toLocaleString()}
+                            </h2>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', fontWeight: '700' }}>
-                                <TrendingUp size={14} /> {savingsPercent.toFixed(0)}% del sueldo
+                                {excess > 0 ? (
+                                    <> <TrendingDown size={14} /> Estás excedido por ${excess.toLocaleString()} </>
+                                ) : (
+                                    <> <TrendingUp size={14} /> {savingsPercent.toFixed(0)}% del sueldo </>
+                                )}
                             </div>
                         </div>
 
@@ -380,25 +468,28 @@ export default function GastosPage() {
                                 <h4 style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1rem' }}>
                                     <PieChart size={16} className="text-primary" /> Distribución
                                 </h4>
-                                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.25rem' }}>
-                                    <svg width="140" height="140" viewBox="0 0 42 42" style={{ transform: 'rotate(-90deg)' }}>
-                                        <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="var(--bg-subtle)" strokeWidth="4"></circle>
+                                <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1.5rem' }}>
+                                    <svg width="160" height="160" viewBox="0 0 42 42">
+                                        <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="var(--bg-subtle)" strokeWidth="3"></circle>
                                         {(() => {
                                             const total = expenses.reduce((s, e) => s + e.amount, 0);
                                             if (total === 0) return null;
                                             let offset = 0;
-                                            const colors = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+                                            const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
                                             const grouped = expenses.reduce((acc, exp) => {
                                                 const cat = exp.category.toLowerCase().trim();
                                                 acc[cat] = (acc[cat] || 0) + exp.amount;
                                                 return acc;
                                             }, {});
 
-                                            return Object.entries(grouped).slice(0, 6).map(([cat, amt], i) => {
+                                            const entries = Object.entries(grouped).sort((a, b) => b[1] - a[1]);
+                                            
+                                            return entries.slice(0, 7).map(([cat, amt], i) => {
                                                 const percent = (amt / total) * 100;
                                                 const dashArray = `${percent} ${100 - percent}`;
-                                                const currentOffset = 100 - offset;
+                                                const rotation = (offset / 100) * 360 - 90;
                                                 offset += percent;
+                                                
                                                 return (
                                                     <circle 
                                                         key={cat}
@@ -407,27 +498,54 @@ export default function GastosPage() {
                                                         stroke={colors[i % colors.length]} 
                                                         strokeWidth="5" 
                                                         strokeDasharray={dashArray} 
-                                                        strokeDashoffset={currentOffset}
+                                                        strokeDashoffset="0"
+                                                        style={{ 
+                                                            transformOrigin: 'center',
+                                                            transform: `rotate(${rotation}deg)`,
+                                                            transition: 'all 0.5s ease'
+                                                        }}
                                                     ></circle>
                                                 );
                                             });
                                         })()}
                                     </svg>
+                                    <div style={{ position: 'absolute', textAlign: 'center' }}>
+                                        <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: '800', display: 'block' }}>TOTAL</span>
+                                        <span style={{ fontSize: '1rem', fontWeight: '900', color: 'var(--text-main)' }}>
+                                            ${expenses.reduce((s, e) => s + e.amount, 0).toLocaleString()}
+                                        </span>
+                                    </div>
                                 </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                                    {Object.entries(expenses.reduce((acc, exp) => {
-                                        const cat = exp.category.toLowerCase().trim();
-                                        acc[cat] = (acc[cat] || 0) + exp.amount;
-                                        return acc;
-                                    }, {})).sort((a,b) => b[1] - a[1]).slice(0, 4).map(([cat, amt], i) => (
-                                        <div key={cat} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', minWidth: 0 }}>
-                                                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: ['#2563eb', '#10b981', '#f59e0b', '#ef4444'][i % 4], flexShrink: 0 }}></div>
-                                                <span style={{ fontWeight: '600', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat}</span>
-                                            </div>
-                                            <span style={{ fontWeight: '800', flexShrink: 0 }}>${amt.toLocaleString()}</span>
-                                        </div>
-                                    ))}
+                                <div className="distribution-legend" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                    {(() => {
+                                        const total = expenses.reduce((s, e) => s + e.amount, 0);
+                                        const grouped = expenses.reduce((acc, exp) => {
+                                            const cat = exp.category.toLowerCase().trim();
+                                            acc[cat] = (acc[cat] || 0) + exp.amount;
+                                            return acc;
+                                        }, {});
+                                        const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
+                                        
+                                        return Object.entries(grouped)
+                                            .sort((a, b) => b[1] - a[1])
+                                            .slice(0, 6)
+                                            .map(([cat, amt], i) => (
+                                                <div key={cat} style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                                        <div style={{ width: '8px', height: '8px', borderRadius: '2px', background: colors[i % colors.length], flexShrink: 0 }}></div>
+                                                        <span style={{ fontWeight: '700', color: 'var(--text-main)', fontSize: '0.75rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>
+                                                            {cat}
+                                                        </span>
+                                                    </div>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: '0.9rem' }}>
+                                                        <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>${amt.toLocaleString()}</span>
+                                                        <span style={{ fontWeight: '800', fontSize: '0.7rem', color: 'var(--primary)' }}>
+                                                            {((amt / total) * 100).toFixed(0)}%
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            ));
+                                    })()}
                                 </div>
                             </div>
                         )}
@@ -498,6 +616,15 @@ export default function GastosPage() {
                 .btn-icon:hover { background: white; border-color: var(--primary); color: var(--primary); }
                 .btn-icon.small { width: 32px; height: 32px; }
                 
+                .btn-icon.active-success {
+                    background: var(--accent) !important;
+                    border-color: var(--accent) !important;
+                    color: white !important;
+                }
+                .btn-icon.active-success:hover {
+                    filter: brightness(1.1);
+                }
+
                 .view-toggle-container {
                     display: flex; 
                     background: var(--bg-subtle); 
@@ -591,16 +718,22 @@ export default function GastosPage() {
 
                 @media (max-width: 900px) {
                     .responsive-layout { grid-template-columns: 1fr !important; }
-                    .expense-form { grid-template-columns: 1fr !important; }
+                    .expense-form { grid-template-columns: 1fr !important; gap: 0.75rem; }
                     .salary-header { flex-direction: column; align-items: flex-start; gap: 1.5rem; }
                     .salary-info { text-align: left; width: 100%; }
                     .salary-info div { justify-content: flex-start !important; }
                     .title-responsive { font-size: 1.75rem !important; }
+                    .card-premium { padding: 1rem !important; }
                 }
 
                 @media (max-width: 600px) {
                     .view-toggle-container { width: 100%; }
-                    .toggle-btn { flex: 1; justify-content: center; }
+                    .toggle-btn { flex: 1; justify-content: center; font-size: 0.75rem; }
+                    .expense-item { flex-wrap: wrap; gap: 0.5rem; }
+                    .expense-item > div:first-child { flex: 1 1 100%; }
+                    .expense-item > div:nth-child(2) { text-align: left !important; flex: 1; }
+                    .expense-item > div:last-child { justify-content: flex-end; }
+                    .distribution-legend { grid-template-columns: 1fr !important; }
                 }
 
                 .skeleton {
@@ -638,4 +771,3 @@ const inputSmallStyle = {
 const labelStyle = { fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase' };
 const thStyle = { padding: '0.75rem 0.5rem', fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' };
 const tdSmallStyle = { padding: '0.75rem 0.5rem', fontSize: '0.85rem' };
-
